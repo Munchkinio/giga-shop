@@ -1,0 +1,96 @@
+# E-commerce Product Catalog - Cursor Rules
+
+You are working on an e-commerce product catalog system. Always follow these rules.
+
+## Tech Stack
+- Monorepo: Turborepo + pnpm (workspaces)
+- Frontend: Next.js 14 (App Router) + TypeScript + Tailwind CSS
+- Backend: Fastify + TypeScript
+- Database: PostgreSQL 15+ with Prisma ORM
+- Cache: Redis (Upstash)
+- Search: PostgreSQL Full-Text Search (tsvector + pg_trgm)
+- Validation: Zod
+- UI Components: shadcn/ui + Radix UI
+- Icons: lucide-react
+- Data fetching (client): TanStack Query
+- URL state: nuqs
+
+## Deployment
+- Frontend: Vercel (Free tier)
+- Backend API: Fly.io (Free tier)
+- Database: Supabase (Free tier - 500MB limit)
+- Redis: Upstash (Free tier - 10K commands/day)
+- CDN: Cloudflare (Free)
+
+## Code Style
+- Use TypeScript strict mode (no `any`, no implicit any)
+- Prefer functional components and hooks
+- Use Zod for ALL input validation (API requests, env vars, forms)
+- Use Prisma for DB queries; use $queryRaw only for FTS queries
+- Use named exports; default exports only for Next.js pages/layouts
+- Naming: camelCase for variables/functions, PascalCase for components/types/classes
+- File naming: kebab-case for files, PascalCase for component files
+- Always use absolute imports with path aliases (@/...)
+- Prefer `const` over `let`; never use `var`
+- Use async/await, not .then() chains
+- Add JSDoc comments for exported functions and complex logic
+
+## Error Handling
+- Throw typed errors (custom error classes)
+- Catch errors in centralized middleware (Fastify error handler)
+- Never swallow errors silently
+- Always log errors with context (use Pino logger)
+- Return user-friendly error messages, log technical details
+
+## Architecture Rules
+- API routes: apps/api/src/routes/ (thin controllers)
+- Business logic: apps/api/src/services/ (testable, pure where possible)
+- DB schema: packages/db/prisma/schema.prisma
+- Shared types: packages/shared-types/src/ (used by both web and api)
+- React components: one component per file, co-locate with styles/tests
+- Server Components by default in Next.js; "use client" only when needed
+
+## Performance Rules
+- Cache search results in Redis (5 min TTL for searches)
+- Cache facets in Redis (10 min TTL)
+- Cache categories tree (1 hour TTL)
+- Use cursor-based pagination for infinite scroll
+- Use offset pagination for traditional page UI
+- Add database indexes for any new query pattern
+- Use Prisma `select` to limit fields returned
+- Avoid N+1 queries; use `include` or batch loading
+- Use Server Components for initial data load (SSR)
+- Use ISR (revalidate) for product pages
+
+## Database Rules
+- Use UUIDs for primary keys (cuid() or uuid())
+- Always include createdAt and updatedAt on entities
+- Use snake_case for column names (Prisma @map)
+- Use camelCase in TypeScript code
+- Add indexes for: foreign keys, fields used in WHERE/ORDER BY
+- Use JSONB for flexible attributes (with GIN index)
+
+## Free Tier Constraints
+- Supabase: 500MB DB → keep test data ~100K products max
+- Upstash Redis: 10K commands/day → cache aggressively, batch operations
+- Vercel: serverless functions have cold starts → keep API on Fly.io instead
+- Fly.io: 256MB RAM per VM → optimize Node.js memory usage
+
+## When Generating Code
+- Always include proper TypeScript types
+- Always include error handling
+- Always include input validation (Zod)
+- Add helpful comments for complex logic
+- Suggest tests where appropriate
+- Reference @ARCHITECTURE.md for design decisions
+
+## When Suggesting Changes
+- Explain WHY before HOW
+- Mention performance implications
+- Mention security implications
+- Suggest alternatives when relevant
+
+## Git Conventions
+- Branch naming: feature/*, fix/*, refactor/*
+- Commit messages: conventional commits (feat:, fix:, chore:, docs:)
+- Keep PRs small and focused

@@ -1,0 +1,16 @@
+---
+description: Follow ARCHITECTURE.md for stack, layout, style, performance, and free-tier limits
+alwaysApply: true
+---
+
+# Project architecture
+
+For all work in this repository, follow **`ARCHITECTURE.md`** at the repo root. It defines:
+
+- **Stack**: Turborepo + pnpm, Next.js 14 App Router, Fastify, Prisma + PostgreSQL (Supabase), Redis (Upstash), FTS, Zod, Vercel + Fly.io
+- **Code style**: TypeScript strict, functional React, Zod validation, Prisma (minimal raw SQL), typed errors + middleware, camelCase / PascalCase, named exports (defaults only where Next.js requires)
+- **Layout**: `apps/api/src/routes/`, `apps/api/src/services/`, `packages/shared-types/`, `packages/db/prisma/schema.prisma`, one component per file, co-located styles, `@/` imports
+- **Performance**: Redis cache for search (5 min TTL), cursor vs offset pagination as specified, indexes for new query patterns, `select` to limit fields
+- **Constraints**: Lean schema (Supabase ~500MB), aggressive caching (Upstash ~10K commands/day), no N+1 (proper `include` / `select`)
+
+If a request would conflict with `ARCHITECTURE.md`, call that out and ask how to proceed before diverging.
