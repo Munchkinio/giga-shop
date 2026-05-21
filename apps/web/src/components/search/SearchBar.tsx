@@ -1,7 +1,14 @@
 "use client";
 
 import { useRouter, useSearchParams } from "next/navigation";
-import { useCallback, useEffect, useId, useState, useTransition } from "react";
+import {
+  useCallback,
+  useEffect,
+  useId,
+  useState,
+  useTransition,
+  type ReactNode,
+} from "react";
 import { SearchAutocomplete } from "@/components/search/SearchAutocomplete";
 import { PaginationModeToggle } from "@/components/search/PaginationModeToggle";
 import { fetchSearchSuggestions } from "@/lib/api-client";
@@ -12,7 +19,11 @@ import type { SearchSuggestion } from "@/types";
 const MIN_SUGGEST_LENGTH = 2;
 const SUGGEST_DEBOUNCE_MS = 300;
 
-export function SearchBar() {
+type SearchBarProps = {
+  trailingActions?: ReactNode;
+};
+
+export function SearchBar({ trailingActions }: SearchBarProps) {
   const router = useRouter();
   const searchParams = useSearchParams();
   const listboxId = useId();
@@ -155,7 +166,7 @@ export function SearchBar() {
     isOpen && query.trim().length >= MIN_SUGGEST_LENGTH;
 
   return (
-    <div className="card-surface flex w-full flex-col gap-3 p-3 sm:flex-row sm:items-stretch sm:gap-2 sm:p-2">
+    <div className="card-surface relative z-50 flex w-full flex-col gap-3 p-3 sm:flex-row sm:items-stretch sm:gap-2 sm:p-2">
       <form
         onSubmit={handleSubmit}
         className="flex min-w-0 flex-1 flex-col gap-2 sm:flex-row sm:items-stretch"
@@ -176,9 +187,30 @@ export function SearchBar() {
             aria-expanded={showDropdown}
             aria-controls={listboxId}
             aria-autocomplete="list"
-            className="input-field"
+            className={`input-field ${query ? "pr-11" : ""}`}
             autoComplete="off"
           />
+          {query ? (
+            <button
+              type="button"
+              onMouseDown={(event) => event.preventDefault()}
+              onClick={() => handleQueryChange("")}
+              disabled={isPending}
+              aria-label="Clear search"
+              className="absolute inset-y-0 right-1 flex w-9 cursor-pointer items-center justify-center text-ink-400 transition-colors hover:text-brand-600 disabled:cursor-not-allowed disabled:opacity-60"
+            >
+              <svg
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                strokeWidth="2"
+                className="size-4 shrink-0"
+                aria-hidden
+              >
+                <path d="M6 6l12 12M18 6 6 18" strokeLinecap="round" />
+              </svg>
+            </button>
+          ) : null}
           <SearchAutocomplete
             suggestions={suggestions}
             activeIndex={activeIndex}
@@ -194,7 +226,10 @@ export function SearchBar() {
           {isPending ? "Searching…" : "Search"}
         </button>
       </form>
-      <PaginationModeToggle />
+      <div className="flex shrink-0 items-stretch gap-2 self-stretch">
+        {trailingActions}
+        <PaginationModeToggle />
+      </div>
     </div>
   );
 }

@@ -1,8 +1,9 @@
 import type { Metadata } from "next";
 import { Suspense } from "react";
+import { ActiveFiltersBar } from "@/components/products/ActiveFiltersBar";
 import { ProductFilters } from "@/components/products/ProductFilters";
 import { ProductGrid } from "@/components/products/ProductGrid";
-import { SearchBar } from "@/components/search/SearchBar";
+import { ProductsCatalogToolbar } from "@/components/products/ProductsCatalogToolbar";
 import { Pagination } from "@/components/ui/Pagination";
 import {
   fetchBrands,
@@ -99,23 +100,27 @@ export default async function ProductsPage({ searchParams }: ProductsPageProps) 
           <div className="h-12 animate-pulse rounded-2xl bg-ink-100/80" />
         }
       >
-        <SearchBar />
+        <ProductsCatalogToolbar
+          categories={categories}
+          brands={brands}
+          attributeFacets={result.facets?.attributes}
+        />
       </Suspense>
 
       <div className="grid gap-8 lg:grid-cols-[260px_1fr]">
-        <Suspense
-          fallback={
-            <div className="h-64 animate-pulse rounded-2xl bg-ink-100/80" />
-          }
-        >
-          <ProductFilters
-            categories={categories}
-            brands={brands}
-            attributeFacets={result.facets?.attributes}
-          />
-        </Suspense>
-
-        <div className="space-y-8">
+        <div className="space-y-6 lg:col-start-2">
+          <Suspense fallback={null}>
+            <ActiveFiltersBar
+              categories={categories.map((category) => ({
+                id: category.id,
+                name: category.name,
+              }))}
+              brands={brands.map((brand) => ({
+                id: brand.id,
+                name: brand.name,
+              }))}
+            />
+          </Suspense>
           <ProductGrid
             products={result.items}
             searchRequest={searchRequest}
@@ -130,6 +135,20 @@ export default async function ProductsPage({ searchParams }: ProductsPageProps) 
             <Pagination result={result} searchRequest={searchRequest} />
           </Suspense>
         </div>
+
+        <Suspense
+          fallback={
+            <div className="hidden h-64 animate-pulse rounded-2xl bg-ink-100/80 lg:block" />
+          }
+        >
+          <div className="hidden lg:block lg:col-start-1 lg:row-start-1">
+            <ProductFilters
+              categories={categories}
+              brands={brands}
+              attributeFacets={result.facets?.attributes}
+            />
+          </div>
+        </Suspense>
       </div>
     </div>
   );

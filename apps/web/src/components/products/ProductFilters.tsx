@@ -23,12 +23,14 @@ type ProductFiltersProps = {
   categories: Category[];
   brands: BrandSummary[];
   attributeFacets?: AttributeFacet[];
+  className?: string;
 };
 
 export function ProductFilters({
   categories,
   brands,
   attributeFacets,
+  className,
 }: ProductFiltersProps) {
   const router = useRouter();
   const searchParams = useSearchParams();
@@ -165,7 +167,12 @@ export function ProductFilters({
   ];
 
   return (
-    <aside className="card-surface sticky top-20 space-y-5 p-5">
+    <aside
+      className={
+        className ??
+        "card-surface space-y-5 p-5 lg:sticky lg:top-20 lg:z-10"
+      }
+    >
       <h2 className="font-display text-base font-bold text-ink-900">Filters</h2>
 
       <div className="block space-y-1.5">
