@@ -9,6 +9,7 @@ export {
   getCategories,
   getCategoryBreadcrumb,
   getCategoryBySlug,
+  getCategoryDescendantIds,
   getCategoryTree,
 } from "./queries/categories";
 export {

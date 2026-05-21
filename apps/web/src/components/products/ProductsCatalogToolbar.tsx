@@ -10,12 +10,14 @@ import type {
   AttributeFacet,
   BrandSummary,
   Category,
+  CategoryTree,
   FacetBucket,
 } from "@/types";
 
 type ProductsCatalogToolbarProps = {
   categories: Category[];
   brands: BrandSummary[];
+  categoryTree: CategoryTree;
   categoryFacets: FacetBucket[];
   brandFacets: FacetBucket[];
   attributeFacets?: AttributeFacet[];
@@ -40,6 +42,7 @@ function FiltersIcon({ className }: { className?: string }) {
 export function ProductsCatalogToolbar({
   categories,
   brands,
+  categoryTree,
   categoryFacets,
   brandFacets,
   attributeFacets,
@@ -53,6 +56,7 @@ export function ProductsCatalogToolbar({
         categories: categories.map((category) => ({
           id: category.id,
           name: category.name,
+          parentId: category.parentId,
         })),
         brands: brands.map((brand) => ({
           id: brand.id,
@@ -107,6 +111,7 @@ export function ProductsCatalogToolbar({
         }
       >
         <ProductFilters
+          categoryTree={categoryTree}
           categoryFacets={categoryFacets}
           brandFacets={brandFacets}
           attributeFacets={attributeFacets}

@@ -7,6 +7,7 @@ import {
   toggleAttributeValue,
   type SelectedAttributes,
 } from "@/lib/attribute-filters";
+import { getCategoryPathLabel } from "@/lib/category-tree-nav";
 
 export const PRICE_RANGE_MIN = 0;
 export const PRICE_RANGE_MAX = 5000;
@@ -17,7 +18,7 @@ export type ActiveFilterChip = {
 };
 
 type FilterLookup = {
-  categories: { id: string; name: string }[];
+  categories: { id: string; name: string; parentId: string | null }[];
   brands: { id: string; name: string }[];
 };
 
@@ -70,9 +71,7 @@ export function collectActiveFilters(
 
   const categoryId = params.get("categoryId");
   if (categoryId) {
-    const categoryName =
-      lookup.categories.find((category) => category.id === categoryId)?.name ??
-      "Category";
+    const categoryName = getCategoryPathLabel(categoryId, lookup.categories);
     chips.push({ id: `category:${categoryId}`, label: categoryName });
 
     const selectedAttributes = parseSelectedAttributes(params.get("attributes"));

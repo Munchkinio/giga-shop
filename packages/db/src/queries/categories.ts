@@ -137,3 +137,60 @@ export async function getCategoryBreadcrumb(
 
   return chain;
 }
+
+/**
+ * Returns the category and all descendants (products on leaves match via `path <@`).
+ */
+export async function getCategoryDescendantIds(
+  categoryId: string,
+): Promise<string[]> {
+  const ltreeRows = await prisma.$queryRaw<Array<{ id: string }>>`
+    SELECT c.id
+    FROM categories c
+    INNER JOIN categories anchor ON anchor.id = ${categoryId}::uuid
+    WHERE anchor.path IS NOT NULL
+      AND c.path IS NOT NULL
+      AND c.path <@ anchor.path
+  `;
+
+  if (ltreeRows.length > 0) {
+    return ltreeRows.map((row) => row.id);
+  }
+
+  return getCategoryDescendantIdsByParent(categoryId);
+}
+
+async function getCategoryDescendantIdsByParent(
+  categoryId: string,
+): Promise<string[]> {
+  const rows = await prisma.category.findMany({
+    select: { id: true, parentId: true },
+  });
+
+  const childrenByParent = new Map<string, string[]>();
+  for (const row of rows) {
+    if (row.parentId) {
+      const list = childrenByParent.get(row.parentId) ?? [];
+      list.push(row.id);
+      childrenByParent.set(row.parentId, list);
+    }
+  }
+
+  const ids: string[] = [];
+  const queue = [categoryId];
+  const seen = new Set<string>();
+
+  while (queue.length > 0) {
+    const id = queue.shift();
+    if (!id || seen.has(id)) {
+      continue;
+    }
+    seen.add(id);
+    ids.push(id);
+    for (const childId of childrenByParent.get(id) ?? []) {
+      queue.push(childId);
+    }
+  }
+
+  return ids;
+}

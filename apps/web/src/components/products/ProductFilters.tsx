@@ -4,6 +4,7 @@ import { useRouter, useSearchParams } from "next/navigation";
 import { useCallback, useTransition } from "react";
 import { AttributeFilters } from "@/components/products/AttributeFilters";
 import { BrandMultiSelect } from "@/components/products/BrandMultiSelect";
+import { CategoryTreePicker } from "@/components/products/CategoryTreePicker";
 import { FilterSelect } from "@/components/products/FilterSelect";
 import { PriceRangeSlider } from "@/components/products/PriceRangeSlider";
 import { SavedSearches } from "@/components/products/SavedSearches";
@@ -14,16 +15,14 @@ import {
   type SelectedAttributes,
 } from "@/lib/attribute-filters";
 import { resetPaginationPosition } from "@/lib/pagination-mode";
-import {
-  facetBucketsToBrandSummaries,
-  formatFacetCountLabel,
-} from "@/lib/filter-facets";
-import type { AttributeFacet, FacetBucket } from "@/types";
+import { facetBucketsToBrandSummaries } from "@/lib/filter-facets";
+import type { AttributeFacet, CategoryTree, FacetBucket } from "@/types";
 
 const PRICE_RANGE_MIN = 0;
 const PRICE_RANGE_MAX = 5000;
 
 type ProductFiltersProps = {
+  categoryTree: CategoryTree;
   categoryFacets: FacetBucket[];
   brandFacets: FacetBucket[];
   attributeFacets?: AttributeFacet[];
@@ -31,6 +30,7 @@ type ProductFiltersProps = {
 };
 
 export function ProductFilters({
+  categoryTree,
   categoryFacets,
   brandFacets,
   attributeFacets,
@@ -144,14 +144,6 @@ export function ProductFilters({
     searchParams.get("attributes"),
   );
 
-  const categoryOptions = [
-    { value: "", label: "All categories" },
-    ...categoryFacets.map((facet) => ({
-      value: facet.id,
-      label: formatFacetCountLabel(facet.name, facet.count),
-    })),
-  ];
-
   const brandsForSelect = facetBucketsToBrandSummaries(brandFacets);
 
   const ratingOptions = [
@@ -182,13 +174,12 @@ export function ProductFilters({
 
       <div className="block space-y-1.5">
         <span className="filter-label">Category</span>
-        <FilterSelect
-          options={categoryOptions}
-          value={categoryId ?? ""}
+        <CategoryTreePicker
+          categoryTree={categoryTree}
+          categoryFacets={categoryFacets}
+          selectedCategoryId={categoryId}
           onChange={updateCategory}
-          placeholder="All categories"
           disabled={isPending}
-          aria-label="Category"
         />
       </div>
 

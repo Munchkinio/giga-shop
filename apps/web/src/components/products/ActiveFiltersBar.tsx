@@ -10,7 +10,7 @@ import {
 import { resetPaginationPosition } from "@/lib/pagination-mode";
 
 type ActiveFiltersBarProps = {
-  categories: { id: string; name: string }[];
+  categories: { id: string; name: string; parentId: string | null }[];
   brands: { id: string; name: string }[];
 };
 

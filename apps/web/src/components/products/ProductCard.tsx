@@ -59,14 +59,14 @@ export function ProductCard({ product, onQuickView }: ProductCardProps) {
             {product.shortDescription}
           </p>
         ) : null}
-        <div className="mt-auto space-y-1.5 border-t border-ink-100/80 pt-3">
+        <div className="mt-auto flex items-center justify-between gap-2 border-t border-ink-100/80 pt-3 sm:flex-col sm:items-stretch sm:gap-1.5">
           <ListPrice
             amount={listPrice.amount}
             showFrom={listPrice.showFrom}
             size="card"
-            className="w-full min-w-0"
+            className="min-w-0 flex-1 flex-nowrap overflow-hidden sm:w-full sm:flex-none"
           />
-          <p className="w-fit rounded-lg bg-ink-50 px-2 py-0.5 text-xs font-medium tabular-nums text-ink-600">
+          <p className="shrink-0 rounded-lg bg-ink-50 px-2 py-0.5 text-[11px] font-medium tabular-nums text-ink-600 sm:w-fit sm:text-xs">
             ★ {product.ratingAvg}
             <span className="text-ink-400">
               {" "}

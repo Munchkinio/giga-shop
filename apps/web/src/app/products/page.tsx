@@ -8,6 +8,7 @@ import { Pagination } from "@/components/ui/Pagination";
 import {
   fetchBrands,
   fetchCategories,
+  fetchCategoryTree,
   fetchProducts,
   fetchSearch,
 } from "@/lib/api-client";
@@ -63,11 +64,12 @@ export default async function ProductsPage({ searchParams }: ProductsPageProps) 
     includeFacets: true,
   };
 
-  const [result, categories, brands] = await Promise.all([
+  const [result, categories, categoryTree, brands] = await Promise.all([
     searchRequest.query
       ? fetchSearch(searchRequest)
       : fetchProducts(searchRequest),
     fetchCategories(),
+    fetchCategoryTree(),
     fetchBrands(),
   ]);
 
@@ -124,6 +126,7 @@ export default async function ProductsPage({ searchParams }: ProductsPageProps) 
         <ProductsCatalogToolbar
           categories={categories}
           brands={brands}
+          categoryTree={categoryTree}
           categoryFacets={categoryFacets}
           brandFacets={brandFacets}
           attributeFacets={result.facets?.attributes}
@@ -137,6 +140,7 @@ export default async function ProductsPage({ searchParams }: ProductsPageProps) 
               categories={categories.map((category) => ({
                 id: category.id,
                 name: category.name,
+                parentId: category.parentId,
               }))}
               brands={brands.map((brand) => ({
                 id: brand.id,
@@ -166,6 +170,7 @@ export default async function ProductsPage({ searchParams }: ProductsPageProps) 
         >
           <div className="hidden lg:block lg:col-start-1 lg:row-start-1">
             <ProductFilters
+              categoryTree={categoryTree}
               categoryFacets={categoryFacets}
               brandFacets={brandFacets}
               attributeFacets={result.facets?.attributes}

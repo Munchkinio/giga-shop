@@ -1,6 +1,7 @@
 import { Prisma } from "@prisma/client";
 import type { SearchRequest, SearchResult } from "@ecommerce/shared-types";
 import { prisma } from "../client";
+import { getCategoryDescendantIds } from "./categories";
 import { getCatalogFacets, type CatalogFacetsResult } from "./facets";
 import {
   buildProductFilterSql,
@@ -14,6 +15,31 @@ import {
 
 function hasCategoryFilter(request: SearchRequest): boolean {
   return request.filters?.categoryId !== undefined;
+}
+
+/** Expands a selected branch to all descendant category ids (leaf products included). */
+async function expandCategoryFilters(
+  request: SearchRequest,
+): Promise<SearchRequest> {
+  const categoryId = request.filters?.categoryId;
+  if (categoryId === undefined) {
+    return request;
+  }
+
+  const anchors = Array.isArray(categoryId) ? categoryId : [categoryId];
+  const anchor = anchors[0];
+  if (!anchor || anchors.length !== 1) {
+    return request;
+  }
+
+  const expanded = await getCategoryDescendantIds(anchor);
+  return {
+    ...request,
+    filters: {
+      ...request.filters,
+      categoryId: expanded,
+    },
+  };
 }
 
 function startCatalogFacets(request: SearchRequest) {
@@ -107,9 +133,10 @@ async function listProductsPrisma(
   request: SearchRequest,
   pagination: PaginationParams,
 ): Promise<SearchResult> {
+  const expandedRequest = await expandCategoryFilters(request);
   const facetsPromise = startCatalogFacets(request);
-  const sort = resolveSort(request.sort, Boolean(request.query));
-  const where = buildProductWhere(request.filters);
+  const sort = resolveSort(expandedRequest.sort, Boolean(expandedRequest.query));
+  const where = buildProductWhere(expandedRequest.filters);
   const orderBy = toPrismaOrderBy(sort);
   const take = pagination.limit + 1;
 
@@ -179,10 +206,11 @@ async function searchProductsFts(
   request: SearchRequest,
   pagination: PaginationParams,
 ): Promise<SearchResult> {
+  const expandedRequest = await expandCategoryFilters(request);
   const facetsPromise = startCatalogFacets(request);
-  const query = request.query!.trim();
-  const sort = resolveSort(request.sort, true);
-  const filterSql = buildProductFilterSql(request.filters);
+  const query = expandedRequest.query!.trim();
+  const sort = resolveSort(expandedRequest.sort, true);
+  const filterSql = buildProductFilterSql(expandedRequest.filters);
   const skip =
     pagination.type === "offset"
       ? (pagination.page - 1) * pagination.pageSize
