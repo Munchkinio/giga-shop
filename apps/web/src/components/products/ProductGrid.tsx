@@ -175,7 +175,7 @@ export function ProductGrid({
         </div>
       ) : null}
 
-      {infiniteMode ? <BackToTopButton /> : null}
+      <BackToTopButton className={infiniteMode ? undefined : "lg:hidden"} />
 
       <ProductQuickViewPanel slug={quickViewSlug} onClose={closeQuickView} />
     </>

@@ -4,7 +4,11 @@ import { useEffect, useState } from "react";
 
 const SCROLL_THRESHOLD_PX = 400;
 
-export function BackToTopButton() {
+type BackToTopButtonProps = {
+  className?: string;
+};
+
+export function BackToTopButton({ className }: BackToTopButtonProps) {
   const [visible, setVisible] = useState(false);
 
   useEffect(() => {
@@ -27,7 +31,7 @@ export function BackToTopButton() {
       onClick={() => window.scrollTo({ top: 0, behavior: "smooth" })}
       aria-label="Back to top"
       title="Back to top"
-      className="fixed bottom-6 right-4 z-30 flex items-center gap-2 rounded-full border border-brand-200 bg-surface px-4 py-2.5 text-sm font-semibold text-brand-800 shadow-glow transition hover:bg-brand-50 sm:right-8 lg:right-10"
+      className={`fixed bottom-6 right-4 z-30 flex cursor-pointer items-center gap-2 rounded-full border border-brand-200 bg-surface px-4 py-2.5 text-sm font-semibold text-brand-800 shadow-glow transition hover:bg-brand-50 sm:right-8 lg:right-10 ${className ?? ""}`}
     >
       <svg
         viewBox="0 0 24 24"
