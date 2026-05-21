@@ -42,7 +42,7 @@ export function ProductCard({ product, onQuickView }: ProductCardProps) {
           </button>
         ) : null}
       </div>
-      <div className="relative z-10 flex flex-1 flex-col gap-2 bg-surface p-4">
+      <div className="relative z-[1] flex flex-1 flex-col gap-2 bg-surface p-4">
         <p className="text-[11px] font-semibold uppercase tracking-wider text-brand-700/90">
           {product.brandName ?? "Brand"}
         </p>

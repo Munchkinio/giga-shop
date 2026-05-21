@@ -120,8 +120,16 @@ export function SearchBar({ trailingActions }: SearchBarProps) {
   }
 
   function applySuggestion(suggestion: SearchSuggestion) {
-    setQuery(suggestion.value);
     setIsOpen(false);
+
+    if (suggestion.type === "product" && suggestion.slug) {
+      startTransition(() => {
+        router.push(`/products/${suggestion.slug}`);
+      });
+      return;
+    }
+
+    setQuery(suggestion.value);
     navigateWithQuery(suggestion.value);
   }
 
@@ -166,12 +174,16 @@ export function SearchBar({ trailingActions }: SearchBarProps) {
     isOpen && query.trim().length >= MIN_SUGGEST_LENGTH;
 
   return (
-    <div className="card-surface relative isolate flex w-full flex-col gap-3 p-3 sm:flex-row sm:items-stretch sm:gap-2 sm:p-2">
+    <div
+      className={`card-surface relative flex w-full flex-col gap-3 p-3 sm:flex-row sm:items-stretch sm:gap-2 sm:p-2 ${
+        showDropdown ? "z-50" : "z-30"
+      }`}
+    >
       <form
         onSubmit={handleSubmit}
         className="flex min-w-0 flex-1 flex-col gap-2 sm:flex-row sm:items-stretch"
       >
-        <div className="relative z-10 min-w-0 flex-1">
+        <div className="relative min-w-0 flex-1">
           <input
             type="search"
             name="q"

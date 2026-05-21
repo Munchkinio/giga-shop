@@ -4,7 +4,7 @@ import { prisma } from "../client";
 const MIN_QUERY_LENGTH = 2;
 
 /**
- * Returns mixed autocomplete suggestions (recent queries, products, brands).
+ * Returns mixed autocomplete suggestions (recent queries, products by name/SKU, brands).
  */
 export async function getSearchSuggestions(
   query: string,
@@ -33,21 +33,31 @@ export async function getSearchSuggestions(
         id: string;
         name: string;
         slug: string;
+        sku: string;
         brand_name: string;
         score: number;
+        sku_prefix_match: boolean;
       }>
     >`
       SELECT
         p.id,
         p.name,
         p.slug,
+        p.sku,
         b.name AS brand_name,
-        similarity(p.name, ${trimmed}) AS score
+        GREATEST(
+          similarity(p.name, ${trimmed}),
+          similarity(p.sku, ${trimmed})
+        ) AS score,
+        (lower(p.sku) LIKE lower(${trimmed}) || '%') AS sku_prefix_match
       FROM products p
       INNER JOIN brands b ON b.id = p.brand_id
       WHERE p.is_active = true
-        AND p.name % ${trimmed}
-      ORDER BY score DESC, p.popularity_score DESC
+        AND (
+          p.name % ${trimmed}
+          OR lower(p.sku) LIKE lower(${trimmed}) || '%'
+        )
+      ORDER BY sku_prefix_match DESC, score DESC, p.popularity_score DESC
       LIMIT ${productLimit}
     `,
     prisma.$queryRaw<
@@ -73,13 +83,16 @@ export async function getSearchSuggestions(
   }
 
   for (const row of products) {
+    const skuMatch = row.sku_prefix_match;
     suggestions.push({
       type: "product",
-      label: row.name,
-      value: row.name,
+      label: skuMatch ? row.sku : row.name,
+      value: skuMatch ? row.sku : row.name,
       id: row.id,
       slug: row.slug,
-      meta: row.brand_name,
+      meta: skuMatch
+        ? `${row.name} · ${row.brand_name}`
+        : `${row.brand_name} · SKU ${row.sku}`,
     });
   }
 

@@ -44,7 +44,7 @@ export function SearchAutocomplete({
 
   return (
     <div
-      className="absolute left-0 right-0 top-full z-[60] mt-2 overflow-hidden rounded-2xl border border-ink-100 bg-surface shadow-card-hover"
+      className="absolute left-0 right-0 top-full z-50 mt-2 overflow-hidden rounded-2xl border border-ink-100 bg-surface shadow-card-hover"
       role="presentation"
     >
       {isLoading ? (

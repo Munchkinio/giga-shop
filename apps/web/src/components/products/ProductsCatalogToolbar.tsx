@@ -64,30 +64,32 @@ export function ProductsCatalogToolbar({
 
   return (
     <>
-      <SearchBar
-        trailingActions={
-          <button
-            type="button"
-            onClick={() => setFiltersOpen(true)}
-            title="Open filters"
-            aria-label={
-              activeFilterCount > 0
-                ? `Open filters, ${activeFilterCount} active`
-                : "Open filters"
-            }
-            className={`btn-icon relative lg:hidden ${
-              activeFilterCount > 0 ? "btn-icon-active" : ""
-            }`}
-          >
-            <FiltersIcon className="size-5" />
-            {activeFilterCount > 0 ? (
-              <span className="absolute -right-1 -top-1 flex size-4 items-center justify-center rounded-full bg-brand-600 text-[10px] font-bold text-white">
-                {activeFilterCount > 9 ? "9+" : activeFilterCount}
-              </span>
-            ) : null}
-          </button>
-        }
-      />
+      <div className="relative z-30">
+        <SearchBar
+          trailingActions={
+            <button
+              type="button"
+              onClick={() => setFiltersOpen(true)}
+              title="Open filters"
+              aria-label={
+                activeFilterCount > 0
+                  ? `Open filters, ${activeFilterCount} active`
+                  : "Open filters"
+              }
+              className={`btn-icon relative lg:hidden ${
+                activeFilterCount > 0 ? "btn-icon-active" : ""
+              }`}
+            >
+              <FiltersIcon className="size-5" />
+              {activeFilterCount > 0 ? (
+                <span className="absolute -right-1 -top-1 flex size-4 items-center justify-center rounded-full bg-brand-600 text-[10px] font-bold text-white">
+                  {activeFilterCount > 9 ? "9+" : activeFilterCount}
+                </span>
+              ) : null}
+            </button>
+          }
+        />
+      </div>
 
       <SlideOverPanel
         open={filtersOpen}

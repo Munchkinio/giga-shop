@@ -130,7 +130,7 @@ export default async function ProductsPage({ searchParams }: ProductsPageProps) 
         />
       </Suspense>
 
-      <div className="grid gap-8 lg:grid-cols-[260px_1fr]">
+      <div className="relative z-0 grid gap-8 lg:grid-cols-[260px_1fr]">
         <div className="space-y-6 lg:col-start-2">
           <Suspense fallback={null}>
             <ActiveFiltersBar
