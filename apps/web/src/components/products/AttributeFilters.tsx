@@ -37,10 +37,10 @@ export function AttributeFilters({
     <div className="space-y-4">
       {facets.map((facet) => (
         <fieldset key={facet.key} className="space-y-2">
-          <legend className="text-xs font-medium text-slate-600">
+          <legend className="text-xs font-medium text-ink-600">
             {formatAttributeKey(facet.key)}
           </legend>
-          <ul className="max-h-44 space-y-0.5 overflow-y-auto rounded-md border border-slate-100 bg-slate-50/50 py-1">
+          <ul className="max-h-44 space-y-0.5 overflow-y-auto rounded-xl border border-ink-100 bg-canvas/80 py-1">
             {facet.values.map((entry) => {
               const checked = isAttributeValueSelected(
                 selected,
@@ -61,12 +61,12 @@ export function AttributeFilters({
                       checked={checked}
                       disabled={disabled}
                       onChange={() => handleToggle(facet.key, entry.value)}
-                      className="mt-0.5 size-4 shrink-0 rounded border-slate-300 text-indigo-600 focus:ring-indigo-500"
+                      className="mt-0.5 size-4 shrink-0 rounded border-ink-300 text-brand-600 focus:ring-brand-400"
                     />
-                    <span className="min-w-0 flex-1 leading-snug text-slate-800">
+                    <span className="min-w-0 flex-1 leading-snug text-ink-800">
                       {formatAttributeValue(facet.key, entry.value)}
                     </span>
-                    <span className="shrink-0 tabular-nums text-xs text-slate-400">
+                    <span className="shrink-0 tabular-nums text-xs text-ink-400">
                       {entry.count}
                     </span>
                   </label>
@@ -82,7 +82,7 @@ export function AttributeFilters({
           type="button"
           disabled={disabled}
           onClick={() => onChange({})}
-          className="w-full rounded-md px-2 py-1.5 text-xs font-medium text-indigo-600 hover:bg-indigo-50 disabled:opacity-60"
+          className="w-full rounded-md px-2 py-1.5 text-xs font-semibold text-brand-700 transition hover:bg-brand-50 disabled:opacity-60"
         >
           Clear all attributes
         </button>

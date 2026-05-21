@@ -45,15 +45,13 @@ function InfinityIcon({ className }: { className?: string }) {
 
 const MODE_META: Record<
   CatalogPaginationMode,
-  { label: string; hint: string; Icon: typeof GridIcon }
+  { hint: string; Icon: typeof GridIcon }
 > = {
   pages: {
-    label: "Paged catalog",
     hint: "Switch to infinite scroll",
     Icon: GridIcon,
   },
   infinite: {
-    label: "Infinite scroll",
     hint: "Switch to paged catalog",
     Icon: InfinityIcon,
   },
@@ -89,10 +87,8 @@ export function PaginationModeToggle() {
       disabled={isPending}
       title={meta.hint}
       aria-label={meta.hint}
-      className={`flex size-[42px] shrink-0 items-center justify-center rounded-lg border bg-white shadow-sm transition hover:border-indigo-400 hover:bg-indigo-50 hover:text-indigo-700 disabled:opacity-60 ${
-        mode === "infinite"
-          ? "border-indigo-400 bg-indigo-50 text-indigo-700"
-          : "border-slate-300 text-slate-700"
+      className={`btn-icon sm:self-stretch ${
+        mode === "infinite" ? "btn-icon-active" : ""
       }`}
     >
       <meta.Icon className="size-5" />

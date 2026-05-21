@@ -66,25 +66,48 @@ export default async function ProductsPage({ searchParams }: ProductsPageProps) 
 
   return (
     <div className="space-y-8">
-      <div className="space-y-2">
-        <h1 className="text-3xl font-bold tracking-tight text-slate-900">
-          Products
-        </h1>
-        <p className="text-slate-600">
-          {searchRequest.query
-            ? `Results for "${searchRequest.query}"`
-            : "Browse our catalog"}
-          {" · "}
-          <span className="font-medium">{result.total}</span> items
-        </p>
-      </div>
+      <section className="card-surface relative overflow-hidden p-6 sm:p-8">
+        <div
+          className="pointer-events-none absolute -right-16 -top-16 h-56 w-56 rounded-full bg-brand-300/30 blur-3xl"
+          aria-hidden
+        />
+        <div
+          className="pointer-events-none absolute -bottom-12 left-1/3 h-40 w-40 rounded-full bg-accent-400/20 blur-3xl"
+          aria-hidden
+        />
+        <div className="relative space-y-3">
+          <p className="badge w-fit">Curated marketplace</p>
+          <h1 className="font-display text-3xl font-bold tracking-tight text-ink-900 sm:text-4xl">
+            {searchRequest.query
+              ? `Results for “${searchRequest.query}”`
+              : "Discover products"}
+          </h1>
+          <p className="max-w-2xl text-sm text-ink-600 sm:text-base">
+            {searchRequest.query
+              ? "Refine with filters or open quick view on any card."
+              : "Search thousands of items, filter by brand and attributes, save your favorite combinations."}
+            {" "}
+            <span className="font-semibold text-brand-700">
+              {result.total.toLocaleString()} items
+            </span>
+          </p>
+        </div>
+      </section>
 
-      <Suspense fallback={<div className="h-12 animate-pulse rounded-lg bg-slate-200" />}>
+      <Suspense
+        fallback={
+          <div className="h-12 animate-pulse rounded-2xl bg-ink-100/80" />
+        }
+      >
         <SearchBar />
       </Suspense>
 
-      <div className="grid gap-8 lg:grid-cols-[240px_1fr]">
-        <Suspense fallback={<div className="h-64 animate-pulse rounded-xl bg-slate-200" />}>
+      <div className="grid gap-8 lg:grid-cols-[260px_1fr]">
+        <Suspense
+          fallback={
+            <div className="h-64 animate-pulse rounded-2xl bg-ink-100/80" />
+          }
+        >
           <ProductFilters
             categories={categories}
             brands={brands}
@@ -101,7 +124,7 @@ export default async function ProductsPage({ searchParams }: ProductsPageProps) 
           />
           <Suspense
             fallback={
-              <div className="h-10 animate-pulse rounded-lg bg-slate-200" />
+              <div className="h-10 animate-pulse rounded-2xl bg-ink-100/80" />
             }
           >
             <Pagination result={result} searchRequest={searchRequest} />

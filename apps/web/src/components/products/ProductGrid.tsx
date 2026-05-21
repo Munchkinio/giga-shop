@@ -130,9 +130,9 @@ export function ProductGrid({
 
   if (items.length === 0) {
     return (
-      <div className="rounded-xl border border-dashed border-slate-300 bg-white px-6 py-16 text-center">
-        <p className="text-lg font-medium text-slate-700">No products found</p>
-        <p className="mt-1 text-sm text-slate-500">
+      <div className="card-surface border-dashed px-6 py-16 text-center">
+        <p className="font-display text-lg font-semibold text-ink-800">No products found</p>
+        <p className="mt-2 text-sm text-ink-500">
           Try adjusting your search or filters.
         </p>
       </div>
@@ -153,11 +153,12 @@ export function ProductGrid({
 
       {infiniteMode ? (
         <div className="mt-6 space-y-2 text-center">
-          <p className="text-sm text-slate-500">
-            Showing {items.length} of {total} products
+          <p className="text-sm text-ink-600">
+            Showing <span className="font-semibold text-brand-700">{items.length}</span> of{" "}
+            {total.toLocaleString()} products
           </p>
           {loadError ? (
-            <p className="text-sm text-red-600" role="alert">
+            <p className="text-sm text-accent-600" role="alert">
               {loadError}
             </p>
           ) : null}
@@ -165,11 +166,11 @@ export function ProductGrid({
             <>
               <div ref={sentinelRef} className="h-1" aria-hidden />
               {isLoadingMore ? (
-                <p className="text-sm text-slate-500">Loading more…</p>
+                <p className="text-sm text-ink-500">Loading more…</p>
               ) : null}
             </>
           ) : (
-            <p className="text-sm text-slate-400">End of results</p>
+            <p className="text-sm text-ink-400">End of results</p>
           )}
         </div>
       ) : null}

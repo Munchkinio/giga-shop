@@ -4,6 +4,7 @@ import { useRouter, useSearchParams } from "next/navigation";
 import { useCallback, useTransition } from "react";
 import { AttributeFilters } from "@/components/products/AttributeFilters";
 import { BrandMultiSelect } from "@/components/products/BrandMultiSelect";
+import { FilterSelect } from "@/components/products/FilterSelect";
 import { PriceRangeSlider } from "@/components/products/PriceRangeSlider";
 import { SavedSearches } from "@/components/products/SavedSearches";
 import {
@@ -137,29 +138,50 @@ export function ProductFilters({
     searchParams.get("attributes"),
   );
 
+  const categoryOptions = [
+    { value: "", label: "All categories" },
+    ...categories.map((category) => ({
+      value: category.id,
+      label: category.name,
+    })),
+  ];
+
+  const ratingOptions = [
+    { value: "", label: "Any" },
+    { value: "3", label: "3+ stars" },
+    { value: "4", label: "4+ stars" },
+    { value: "4.5", label: "4.5+ stars" },
+  ];
+
+  const sortOptions = [
+    { value: "popularityScore", label: "Popularity" },
+    { value: "ratingAvg", label: "Rating" },
+    { value: "basePrice", label: "Price" },
+    { value: "createdAt", label: "Newest" },
+    { value: "name", label: "Name" },
+    ...(searchParams.get("q")
+      ? [{ value: "relevance", label: "Relevance" }]
+      : []),
+  ];
+
   return (
-    <aside className="space-y-4 rounded-xl border border-slate-200 bg-white p-4 shadow-sm">
-      <h2 className="text-sm font-semibold text-slate-900">Filters</h2>
+    <aside className="card-surface sticky top-20 space-y-5 p-5">
+      <h2 className="font-display text-base font-bold text-ink-900">Filters</h2>
 
-      <label className="block space-y-1">
-        <span className="text-xs font-medium text-slate-600">Category</span>
-        <select
+      <div className="block space-y-1.5">
+        <span className="filter-label">Category</span>
+        <FilterSelect
+          options={categoryOptions}
           value={categoryId ?? ""}
-          onChange={(e) => updateCategory(e.target.value)}
+          onChange={updateCategory}
+          placeholder="All categories"
           disabled={isPending}
-          className="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm"
-        >
-          <option value="">All categories</option>
-          {categories.map((category) => (
-            <option key={category.id} value={category.id}>
-              {category.name}
-            </option>
-          ))}
-        </select>
-      </label>
+          aria-label="Category"
+        />
+      </div>
 
-      <div className="block space-y-1">
-        <span className="text-xs font-medium text-slate-600">Brands</span>
+      <div className="block space-y-1.5">
+        <span className="filter-label">Brands</span>
         <BrandMultiSelect
           brands={brands}
           selectedIds={getSelectedBrandIds()}
@@ -177,19 +199,19 @@ export function ProductFilters({
             disabled={isPending}
           />
         ) : (
-          <p className="text-xs text-slate-500">
+          <p className="text-xs text-ink-500">
             No attribute filters for this category.
           </p>
         )
       ) : (
-        <p className="text-xs text-slate-500">
+        <p className="text-xs leading-relaxed text-ink-500">
           Select a category to filter by color, size, material, and other
           attributes.
         </p>
       )}
 
       <div className="block space-y-2">
-        <span className="text-xs font-medium text-slate-600">Price range</span>
+        <span className="filter-label">Price range</span>
         <PriceRangeSlider
           min={PRICE_RANGE_MIN}
           max={PRICE_RANGE_MAX}
@@ -200,39 +222,29 @@ export function ProductFilters({
         />
       </div>
 
-      <label className="block space-y-1">
-        <span className="text-xs font-medium text-slate-600">Min rating</span>
-        <select
+      <div className="block space-y-1.5">
+        <span className="filter-label">Min rating</span>
+        <FilterSelect
+          options={ratingOptions}
           value={searchParams.get("ratingMin") ?? ""}
-          onChange={(e) => updateParam("ratingMin", e.target.value)}
+          onChange={(next) => updateParam("ratingMin", next)}
+          placeholder="Any"
           disabled={isPending}
-          className="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm"
-        >
-          <option value="">Any</option>
-          <option value="3">3+ stars</option>
-          <option value="4">4+ stars</option>
-          <option value="4.5">4.5+ stars</option>
-        </select>
-      </label>
+          aria-label="Minimum rating"
+        />
+      </div>
 
-      <label className="block space-y-1">
-        <span className="text-xs font-medium text-slate-600">Sort by</span>
-        <select
+      <div className="block space-y-1.5">
+        <span className="filter-label">Sort by</span>
+        <FilterSelect
+          options={sortOptions}
           value={searchParams.get("sortField") ?? "popularityScore"}
-          onChange={(e) => updateParam("sortField", e.target.value)}
+          onChange={(next) => updateParam("sortField", next)}
+          placeholder="Popularity"
           disabled={isPending}
-          className="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm"
-        >
-          <option value="popularityScore">Popularity</option>
-          <option value="ratingAvg">Rating</option>
-          <option value="basePrice">Price</option>
-          <option value="createdAt">Newest</option>
-          <option value="name">Name</option>
-          {searchParams.get("q") ? (
-            <option value="relevance">Relevance</option>
-          ) : null}
-        </select>
-      </label>
+          aria-label="Sort by"
+        />
+      </div>
 
       <SavedSearches />
     </aside>

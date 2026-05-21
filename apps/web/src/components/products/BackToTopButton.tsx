@@ -27,7 +27,7 @@ export function BackToTopButton() {
       onClick={() => window.scrollTo({ top: 0, behavior: "smooth" })}
       aria-label="Back to top"
       title="Back to top"
-      className="fixed bottom-6 right-4 z-30 flex items-center gap-2 rounded-full border border-slate-200 bg-white px-4 py-2.5 text-sm font-semibold text-slate-800 shadow-lg transition hover:border-indigo-300 hover:bg-indigo-50 hover:text-indigo-700 sm:right-8 lg:right-10"
+      className="fixed bottom-6 right-4 z-30 flex items-center gap-2 rounded-full border border-brand-200 bg-surface px-4 py-2.5 text-sm font-semibold text-brand-800 shadow-glow transition hover:bg-brand-50 sm:right-8 lg:right-10"
     >
       <svg
         viewBox="0 0 24 24"

@@ -67,16 +67,16 @@ export default async function ProductPage({ params }: ProductPageProps) {
 
   return (
     <div className="space-y-8">
-      <nav className="text-sm text-slate-500">
-        <Link href="/products" className="hover:text-brand-700">
+      <nav className="text-sm text-ink-500">
+        <Link href="/products" className="font-medium text-brand-700 hover:text-brand-800">
           Products
         </Link>
-        <span className="mx-2">/</span>
-        <span className="text-slate-900">{product.name}</span>
+        <span className="mx-2 text-ink-300">/</span>
+        <span className="text-ink-900">{product.name}</span>
       </nav>
 
       <div className="grid gap-10 lg:grid-cols-2">
-        <div className="relative aspect-square overflow-hidden rounded-xl border border-slate-200 bg-white">
+        <div className="card-surface relative aspect-square overflow-hidden p-0">
           <Image
             src={primaryImageUrl}
             alt={primaryImage?.altText ?? product.name}
@@ -89,39 +89,37 @@ export default async function ProductPage({ params }: ProductPageProps) {
 
         <div className="space-y-6">
           <div>
-            <p className="text-sm font-medium text-brand-600">
-              {product.brand?.name ?? "Brand"}
-            </p>
-            <h1 className="mt-1 text-3xl font-bold text-slate-900">
+            <p className="badge w-fit">{product.brand?.name ?? "Brand"}</p>
+            <h1 className="font-display mt-3 text-3xl font-bold tracking-tight text-ink-900">
               {product.name}
             </h1>
-            <p className="mt-1 text-sm text-slate-500">SKU: {product.sku}</p>
+            <p className="mt-1 text-sm text-ink-500">SKU: {product.sku}</p>
           </div>
 
           <div className="flex items-baseline gap-3">
-            <span className="text-3xl font-bold text-slate-900">
+            <span className="font-display text-3xl font-bold text-ink-900">
               ${product.basePrice}
             </span>
-            <span className="text-sm text-slate-500">{product.currency}</span>
+            <span className="text-sm text-ink-500">{product.currency}</span>
           </div>
 
-          <p className="text-sm text-slate-600">
+          <p className="text-sm text-ink-600">
             ★ {product.ratingAvg} ({product.ratingCount} reviews) ·{" "}
             {product.popularityScore} popularity score
           </p>
 
           {product.shortDescription ? (
-            <p className="text-slate-700">{product.shortDescription}</p>
+            <p className="text-ink-700">{product.shortDescription}</p>
           ) : null}
 
           {Object.keys(product.attributes).length > 0 ? (
-            <dl className="grid grid-cols-2 gap-2 rounded-lg border border-slate-200 bg-white p-4 text-sm">
+            <dl className="card-surface grid grid-cols-2 gap-2 p-4 text-sm">
               {Object.entries(product.attributes).map(([key, value]) => (
                 <div key={key}>
-                  <dt className="font-medium capitalize text-slate-500">
+                  <dt className="font-medium capitalize text-ink-500">
                     {key.replace(/_/g, " ")}
                   </dt>
-                  <dd className="text-slate-900">{String(value)}</dd>
+                  <dd className="text-ink-900">{String(value)}</dd>
                 </div>
               ))}
             </dl>
@@ -129,18 +127,20 @@ export default async function ProductPage({ params }: ProductPageProps) {
 
           {product.offers.length > 0 ? (
             <section className="space-y-3">
-              <h2 className="text-lg font-semibold text-slate-900">Offers</h2>
-              <ul className="divide-y divide-slate-200 rounded-xl border border-slate-200 bg-white">
+              <h2 className="font-display text-lg font-semibold text-ink-900">
+                Offers
+              </h2>
+              <ul className="card-surface divide-y divide-ink-100 p-0">
                 {product.offers.map((offer) => (
                   <li
                     key={offer.id}
                     className="flex items-center justify-between px-4 py-3 text-sm"
                   >
                     <div>
-                      <p className="font-medium text-slate-900">
+                      <p className="font-medium text-ink-900">
                         {offer.sellerName}
                       </p>
-                      <p className="text-slate-500">
+                      <p className="text-ink-500">
                         {offer.isAvailable
                           ? `${offer.stockQuantity} in stock`
                           : "Out of stock"}
@@ -150,9 +150,9 @@ export default async function ProductPage({ params }: ProductPageProps) {
                       </p>
                     </div>
                     <div className="text-right">
-                      <p className="font-bold text-slate-900">${offer.price}</p>
+                      <p className="font-bold text-brand-800">${offer.price}</p>
                       {offer.compareAtPrice ? (
-                        <p className="text-xs text-slate-400 line-through">
+                        <p className="text-xs text-ink-400 line-through">
                           ${offer.compareAtPrice}
                         </p>
                       ) : null}
@@ -165,9 +165,11 @@ export default async function ProductPage({ params }: ProductPageProps) {
         </div>
       </div>
 
-      <section className="prose prose-slate max-w-none rounded-xl border border-slate-200 bg-white p-6">
-        <h2 className="text-lg font-semibold text-slate-900">Description</h2>
-        <div className="mt-2 whitespace-pre-line text-sm text-slate-700">
+      <section className="card-surface max-w-none p-6">
+        <h2 className="font-display text-lg font-semibold text-ink-900">
+          Description
+        </h2>
+        <div className="mt-3 whitespace-pre-line text-sm leading-relaxed text-ink-700">
           {product.description}
         </div>
       </section>

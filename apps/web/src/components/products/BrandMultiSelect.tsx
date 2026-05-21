@@ -103,12 +103,14 @@ export function BrandMultiSelect({
           aria-haspopup="listbox"
           aria-controls={listboxId}
           onClick={() => setOpen((prev) => !prev)}
-          className="flex w-full items-center justify-between rounded-lg border border-slate-300 bg-white px-3 py-2 text-left text-sm text-slate-900 shadow-sm hover:border-slate-400 disabled:cursor-not-allowed disabled:opacity-60"
+          className={`select-field flex w-full items-center justify-between text-left disabled:cursor-not-allowed disabled:opacity-60 ${
+            open ? "border-brand-400 ring-2 ring-brand-200/80" : ""
+          }`}
         >
-          <span className={selectedIds.length === 0 ? "text-slate-500" : undefined}>
+          <span className={selectedIds.length === 0 ? "text-ink-500" : undefined}>
             {triggerLabel}
           </span>
-          <span className="text-slate-400" aria-hidden>
+          <span className="text-ink-400" aria-hidden>
             {open ? "▴" : "▾"}
           </span>
         </button>
@@ -118,37 +120,37 @@ export function BrandMultiSelect({
             id={listboxId}
             role="listbox"
             aria-multiselectable
-            className="absolute z-30 mt-1 w-full rounded-lg border border-slate-200 bg-white shadow-lg"
+            className="absolute z-30 mt-1 w-full rounded-2xl border border-ink-100 bg-surface shadow-card-hover"
           >
-            <div className="border-b border-slate-100 p-2">
+            <div className="border-b border-ink-100 p-2">
               <input
                 type="search"
                 value={query}
                 onChange={(event) => setQuery(event.target.value)}
                 placeholder="Search brands…"
                 aria-label="Search brands"
-                className="w-full rounded-md border border-slate-200 px-2.5 py-1.5 text-sm outline-none ring-indigo-500 focus:border-indigo-500 focus:ring-1"
+                className="input-field py-2 text-sm"
                 autoFocus
               />
             </div>
 
             <ul className="max-h-52 overflow-y-auto py-1">
               {filteredBrands.length === 0 ? (
-                <li className="px-3 py-2 text-sm text-slate-500">No brands found</li>
+                <li className="px-3 py-2 text-sm text-ink-500">No brands found</li>
               ) : (
                 filteredBrands.map((brand) => {
                   const checked = selectedSet.has(brand.id);
                   return (
                     <li key={brand.id}>
-                      <label className="flex cursor-pointer items-start gap-2 px-3 py-2 text-sm hover:bg-slate-50">
+                      <label className="flex cursor-pointer items-start gap-2 px-3 py-2 text-sm hover:bg-ink-50">
                         <input
                           type="checkbox"
                           checked={checked}
                           onChange={() => toggleBrand(brand.id)}
                           disabled={disabled}
-                          className="mt-0.5 size-4 shrink-0 rounded border-slate-300 text-indigo-600 focus:ring-indigo-500"
+                          className="mt-0.5 size-4 shrink-0 rounded border-ink-300 text-brand-600 focus:ring-brand-500"
                         />
-                        <span className="min-w-0 flex-1 leading-snug text-slate-800">
+                        <span className="min-w-0 flex-1 leading-snug text-ink-800">
                           {brand.name}
                         </span>
                       </label>
@@ -159,12 +161,12 @@ export function BrandMultiSelect({
             </ul>
 
             {selectedIds.length > 0 ? (
-              <div className="border-t border-slate-100 p-2">
+              <div className="border-t border-ink-100 p-2">
                 <button
                   type="button"
                   onClick={clearAll}
                   disabled={disabled}
-                  className="w-full rounded-md px-2 py-1.5 text-xs font-medium text-indigo-600 hover:bg-indigo-50 disabled:opacity-60"
+                  className="w-full rounded-md px-2 py-1.5 text-xs font-medium text-brand-600 hover:bg-brand-50 disabled:opacity-60"
                 >
                   Clear all brands
                 </button>
@@ -179,7 +181,7 @@ export function BrandMultiSelect({
           {selectedBrands.map((brand) => (
             <span
               key={brand.id}
-              className="inline-flex items-center gap-1 rounded-full bg-indigo-50 px-2 py-0.5 text-xs font-medium text-indigo-800"
+              className="inline-flex items-center gap-1 rounded-full bg-brand-50 px-2 py-0.5 text-xs font-medium text-brand-800"
             >
               {brand.name}
               <button
@@ -187,7 +189,7 @@ export function BrandMultiSelect({
                 onClick={() => removeBrand(brand.id)}
                 disabled={disabled}
                 aria-label={`Remove ${brand.name}`}
-                className="rounded-full leading-none text-indigo-600 hover:bg-indigo-100 disabled:opacity-60"
+                className="rounded-full leading-none text-brand-600 hover:bg-brand-100 disabled:opacity-60"
               >
                 ×
               </button>

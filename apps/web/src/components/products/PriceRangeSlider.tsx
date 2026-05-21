@@ -27,7 +27,7 @@ function clamp(value: number, lower: number, upper: number): number {
 }
 
 const THUMB_CLASS =
-  "absolute top-1/2 z-10 h-4 w-4 -translate-x-1/2 -translate-y-1/2 rounded-full border-2 border-white bg-indigo-500 shadow-md outline-none transition-shadow focus-visible:ring-2 focus-visible:ring-indigo-500 focus-visible:ring-offset-1 disabled:cursor-not-allowed";
+  "absolute top-1/2 z-10 h-4 w-4 -translate-x-1/2 -translate-y-1/2 rounded-full border-2 border-white bg-brand-600 shadow-glow outline-none transition-shadow focus-visible:ring-2 focus-visible:ring-brand-400 focus-visible:ring-offset-1 disabled:cursor-not-allowed";
 
 export function PriceRangeSlider({
   min,
@@ -175,7 +175,7 @@ export function PriceRangeSlider({
 
   return (
     <div className={disabled ? "pointer-events-none opacity-60" : undefined}>
-      <div className="mb-3 flex items-center justify-between text-xs font-medium text-slate-700">
+      <div className="mb-3 flex items-center justify-between text-xs font-semibold text-ink-700">
         <span>{formatUsd(localMin)}</span>
         <span>{formatUsd(localMax)}</span>
       </div>
@@ -185,9 +185,9 @@ export function PriceRangeSlider({
         className="relative mx-2 h-8 touch-none select-none"
         onPointerDown={handleTrackPointerDown}
       >
-        <div className="absolute left-0 right-0 top-1/2 h-1.5 -translate-y-1/2 rounded-full bg-slate-200">
+        <div className="absolute left-0 right-0 top-1/2 h-1.5 -translate-y-1/2 rounded-full bg-ink-200">
           <div
-            className="absolute h-full rounded-full bg-indigo-500"
+            className="absolute h-full rounded-full bg-gradient-to-r from-brand-500 to-brand-600"
             style={{
               left: `${minPercent}%`,
               width: `${Math.max(maxPercent - minPercent, 0)}%`,

@@ -54,14 +54,14 @@ function PageSizeSelector() {
   }
 
   return (
-    <label className="flex items-center gap-2 text-sm text-slate-600">
+    <label className="flex items-center gap-2 text-sm text-ink-600">
       <span className="font-medium">Per page</span>
       <select
         value={String(pageSize)}
         onChange={(event) => handlePageSizeChange(event.target.value)}
         disabled={isPending}
         aria-label="Products per page"
-        className="rounded-lg border border-slate-300 bg-white px-3 py-1.5 text-sm text-slate-900 disabled:opacity-60"
+        className="select-field w-auto py-1.5 disabled:opacity-60"
       >
         {PAGE_SIZE_OPTIONS.map((size) => (
           <option key={size} value={size}>
@@ -78,9 +78,9 @@ export function Pagination({ result, searchRequest }: PaginationProps) {
 
   if (pagination.type === "cursor") {
     return (
-      <div className="flex flex-col items-center gap-4">
+      <div className="card-surface flex flex-col items-center gap-3 px-6 py-4">
         <PageSizeSelector />
-        <p className="text-sm text-slate-500">
+        <p className="text-sm text-ink-500">
           Scroll down to load more · batch size above
         </p>
       </div>
@@ -101,40 +101,38 @@ export function Pagination({ result, searchRequest }: PaginationProps) {
   };
 
   return (
-    <div className="flex flex-col items-center gap-4">
+    <div className="card-surface flex flex-col items-center gap-4 px-6 py-5">
       <PageSizeSelector />
-      <p className="text-sm text-slate-500">
-        {total} product{total === 1 ? "" : "s"}
-        {totalPages > 1 ? ` · Page ${page} of ${totalPages}` : null}
+      <p className="text-sm text-ink-600">
+        <span className="font-semibold text-ink-900">
+          {total.toLocaleString()}
+        </span>{" "}
+        product{total === 1 ? "" : "s"}
+        {totalPages > 1 ? (
+          <span className="text-ink-500">
+            {" "}
+            · Page {page} of {totalPages}
+          </span>
+        ) : null}
       </p>
       {totalPages > 1 ? (
         <nav
-          className="flex items-center justify-center gap-4"
+          className="flex items-center justify-center gap-3"
           aria-label="Pagination"
         >
           {page > 1 ? (
-            <Link
-              href={buildProductsUrl("/products", prevRequest)}
-              className="rounded-lg border border-slate-300 bg-white px-4 py-2 text-sm font-medium hover:border-brand-600"
-            >
+            <Link href={buildProductsUrl("/products", prevRequest)} className="btn-secondary">
               Previous
             </Link>
           ) : (
-            <span className="rounded-lg border border-slate-100 px-4 py-2 text-sm text-slate-300">
-              Previous
-            </span>
+            <span className="btn-secondary pointer-events-none opacity-40">Previous</span>
           )}
           {pagination.hasMore ? (
-            <Link
-              href={buildProductsUrl("/products", nextRequest)}
-              className="rounded-lg border border-slate-300 bg-white px-4 py-2 text-sm font-medium hover:border-brand-600"
-            >
+            <Link href={buildProductsUrl("/products", nextRequest)} className="btn-primary">
               Next
             </Link>
           ) : (
-            <span className="rounded-lg border border-slate-100 px-4 py-2 text-sm text-slate-300">
-              Next
-            </span>
+            <span className="btn-primary pointer-events-none opacity-40">Next</span>
           )}
         </nav>
       ) : null}

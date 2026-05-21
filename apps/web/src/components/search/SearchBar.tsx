@@ -155,8 +155,11 @@ export function SearchBar() {
     isOpen && query.trim().length >= MIN_SUGGEST_LENGTH;
 
   return (
-    <div className="flex w-full gap-2">
-      <form onSubmit={handleSubmit} className="flex min-w-0 flex-1 gap-2">
+    <div className="card-surface flex w-full flex-col gap-3 p-3 sm:flex-row sm:items-stretch sm:gap-2 sm:p-2">
+      <form
+        onSubmit={handleSubmit}
+        className="flex min-w-0 flex-1 flex-col gap-2 sm:flex-row sm:items-stretch"
+      >
         <div className="relative min-w-0 flex-1">
           <input
             type="search"
@@ -168,12 +171,12 @@ export function SearchBar() {
               window.setTimeout(() => setIsOpen(false), 150);
             }}
             onKeyDown={handleKeyDown}
-            placeholder="Search products…"
+            placeholder="Search products, brands, SKUs…"
             role="combobox"
             aria-expanded={showDropdown}
             aria-controls={listboxId}
             aria-autocomplete="list"
-            className="w-full rounded-lg border border-slate-300 bg-white px-4 py-2.5 text-sm shadow-sm outline-none ring-brand-600 focus:border-brand-600 focus:ring-2"
+            className="input-field"
             autoComplete="off"
           />
           <SearchAutocomplete
@@ -187,11 +190,7 @@ export function SearchBar() {
             onHighlight={setActiveIndex}
           />
         </div>
-        <button
-          type="submit"
-          disabled={isPending}
-          className="shrink-0 rounded-lg bg-brand-600 px-5 py-2.5 text-sm font-semibold text-white transition hover:bg-brand-700 disabled:opacity-60"
-        >
+        <button type="submit" disabled={isPending} className="btn-primary shrink-0">
           {isPending ? "Searching…" : "Search"}
         </button>
       </form>

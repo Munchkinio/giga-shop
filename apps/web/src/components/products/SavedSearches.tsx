@@ -79,11 +79,12 @@ export function SavedSearches() {
     if (!sessionId) {
       return;
     }
+
     setError(null);
     startTransition(async () => {
       try {
         await deleteSavedSearch(sessionId, id);
-        setItems((prev) => prev.filter((item) => item.id !== id));
+        setItems((prev) => prev.filter((s) => s.id !== id));
       } catch (err) {
         setError(
           err instanceof ApiError ? err.message : "Failed to delete saved search",
@@ -99,12 +100,12 @@ export function SavedSearches() {
   }
 
   return (
-    <div className="space-y-3 border-t border-slate-200 pt-4">
-      <h3 className="text-sm font-semibold text-slate-900">Saved searches</h3>
+    <div className="space-y-3 border-t border-ink-200/80 pt-4">
+      <h3 className="filter-label">Saved searches</h3>
 
       <form onSubmit={handleSave} className="space-y-2">
         <label className="block space-y-1">
-          <span className="text-xs font-medium text-slate-600">Name</span>
+          <span className="text-xs font-medium text-ink-600">Name</span>
           <input
             type="text"
             value={name}
@@ -112,28 +113,28 @@ export function SavedSearches() {
             placeholder="e.g. Red cotton under $50"
             maxLength={100}
             disabled={isPending}
-            className="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm outline-none ring-indigo-500 focus:border-indigo-500 focus:ring-1"
+            className="input-field"
           />
         </label>
         <button
           type="submit"
           disabled={isPending || !name.trim()}
-          className="w-full rounded-lg bg-indigo-600 px-3 py-2 text-sm font-medium text-white hover:bg-indigo-700 disabled:opacity-60"
+          className="btn-primary w-full disabled:opacity-60"
         >
           {isPending ? "Saving…" : "Save current filters"}
         </button>
       </form>
 
       {error ? (
-        <p className="text-xs text-red-600" role="alert">
+        <p className="text-xs text-accent-600" role="alert">
           {error}
         </p>
       ) : null}
 
       {loading ? (
-        <p className="text-xs text-slate-500">Loading…</p>
+        <p className="text-xs text-ink-500">Loading…</p>
       ) : items.length === 0 ? (
-        <p className="text-xs text-slate-500">
+        <p className="text-xs text-ink-500">
           Save your search query and filters to reopen them later.
         </p>
       ) : (
@@ -141,14 +142,14 @@ export function SavedSearches() {
           {items.map((saved) => (
             <li
               key={saved.id}
-              className="rounded-lg border border-slate-200 bg-slate-50/80 p-2.5"
+              className="rounded-xl border border-ink-100 bg-canvas/60 p-2.5"
             >
               <div className="flex items-start justify-between gap-2">
                 <div className="min-w-0">
-                  <p className="truncate text-sm font-medium text-slate-900">
+                  <p className="truncate text-sm font-semibold text-ink-900">
                     {saved.name}
                   </p>
-                  <p className="text-xs text-slate-500">
+                  <p className="text-xs text-ink-500">
                     {describeSavedSearch(saved)}
                   </p>
                 </div>
@@ -157,7 +158,7 @@ export function SavedSearches() {
                   onClick={() => handleDelete(saved.id)}
                   disabled={isPending}
                   aria-label={`Delete ${saved.name}`}
-                  className="shrink-0 rounded p-1 text-slate-400 hover:bg-white hover:text-red-600 disabled:opacity-60"
+                  className="shrink-0 rounded p-1 text-ink-400 transition hover:bg-surface hover:text-accent-600 disabled:opacity-60"
                 >
                   ×
                 </button>
@@ -167,13 +168,13 @@ export function SavedSearches() {
                   type="button"
                   onClick={() => handleApply(saved)}
                   disabled={isPending}
-                  className="rounded-md px-2 py-1 text-xs font-medium text-indigo-600 hover:bg-indigo-50 disabled:opacity-60"
+                  className="rounded-md px-2 py-1 text-xs font-semibold text-brand-700 transition hover:bg-brand-50 disabled:opacity-60"
                 >
                   Apply
                 </button>
                 <Link
                   href={buildProductsUrlFromSavedSearch(saved)}
-                  className="rounded-md px-2 py-1 text-xs font-medium text-slate-600 hover:bg-white"
+                  className="rounded-md px-2 py-1 text-xs font-medium text-ink-600 transition hover:bg-surface"
                   scroll={false}
                 >
                   Open
