@@ -10,6 +10,7 @@ For day-to-day coding conventions and performance rules, see **[ARCHITECTURE.md]
 
 - [Features](#features)
 - [Architecture](#architecture)
+- [Scope: real-time price & inventory](#scope-real-time-price--inventory)
 - [Tech stack](#tech-stack)
 - [Repository layout](#repository-layout)
 - [Prerequisites](#prerequisites)
@@ -91,6 +92,72 @@ flowchart LR
 | Queries | `packages/db/src/queries/` | Prisma + `$queryRaw` for FTS |
 | Types | `packages/shared-types/` | Zod schemas + TypeScript types |
 | UI | `apps/web/src/components/` | React components (one per file) |
+
+---
+
+## Scope: real-time price & inventory
+
+Some marketplace specs include a requirement like **“handle real-time inventory and price updates without impacting search performance.”** That describes a **production-scale pattern**, not a mandate to run **Apache Kafka** (or any message bus) in this repository.
+
+### What the requirement means
+
+| Concern | Typical production approach |
+|---------|----------------------------|
+| **Writes** | Price and stock change often (`ProductOffer`), sometimes from many sources (ERP, seller APIs, pricing engines) |
+| **Reads** | Search and listing stay fast: FTS and facets stay on stable **product** fields; list price comes from offers or a **denormalized** column |
+| **Decoupling** | An event bus (e.g. Kafka) lets many consumers react to one `offer.price_changed` event without the catalog API calling every downstream system |
+
+Kafka is a common way to implement that decoupling at high volume. It is **not** implied for a ~10K seeded demo on free-tier infrastructure.
+
+### What this MVP implements
+
+- **Data model**: `Product` (catalog, FTS, category, attributes) vs `ProductOffer` (seller price, `stockQuantity`, `isAvailable`).
+- **Storefront**: list and PDP use **in-stock offers** (min price, seller count); `inStock` filter; sort by min offer price where applicable.
+- **Search**: PostgreSQL FTS on product text fields — **not** rebuilt on every offer price change.
+- **Cache**: Redis for search/list/suggest (see [Caching](#caching)); optional locally if Upstash is unset.
+
+### What is out of scope (by design)
+
+- Kafka / streaming pipelines, consumer groups, replay-at-scale
+- Continuous ingestion (1M+ offer updates per day)
+- Live UI updates without refresh (WebSockets / SSE)
+- Automatic cache invalidation on offer write (planned; today TTL-based cache only)
+- Denormalized `min_list_price` on `products` maintained by a background worker
+
+Demo data is loaded once via **`pnpm --filter @ecommerce/db db:seed`**. Manual edits (e.g. Prisma Studio) are enough to show that offer changes update the storefront without breaking search.
+
+### Planned evolution (no Kafka required initially)
+
+```mermaid
+flowchart LR
+  subgraph mvp [MVP — current]
+    W1[Offer UPDATE\nAPI or script]
+    PG1[(PostgreSQL)]
+    W1 --> PG1
+    R1[Redis TTL cache]
+  end
+
+  subgraph scale [Scale — roadmap]
+    E[Events\nKafka or lighter queue]
+    W2[Workers]
+    PG2[(PostgreSQL)]
+    INV[Cache invalidation\nper productId]
+    DEN[Denormalized list price]
+    E --> W2
+    W2 --> PG2
+    W2 --> INV
+    W2 --> DEN
+  end
+
+  mvp -.->|when update volume\nand sources grow| scale
+```
+
+1. **Write path**: update `ProductOffer` only; do **not** touch `search_vector` for price/stock-only changes.
+2. **Read path**: keep serving search from `Product`; refresh list price from offers or a denormalized column.
+3. **Cache**: invalidate keys scoped by `productId` (or shorten TTL for price-sensitive keys).
+4. **At scale**: publish offer change events to Kafka (or Redis Streams / a job queue) so workers update Postgres, Redis, and denormalized fields in batches — search stays on its own read model.
+
+**Summary:** the spec points at **separating volatile offer data from search**, not at adding Kafka to Giga Shop for the demo. Documenting that here avoids expecting a live price feed or a message bus in local development.
 
 ---
 
