@@ -166,12 +166,12 @@ export function SearchBar({ trailingActions }: SearchBarProps) {
     isOpen && query.trim().length >= MIN_SUGGEST_LENGTH;
 
   return (
-    <div className="card-surface relative z-50 flex w-full flex-col gap-3 p-3 sm:flex-row sm:items-stretch sm:gap-2 sm:p-2">
+    <div className="card-surface relative isolate flex w-full flex-col gap-3 p-3 sm:flex-row sm:items-stretch sm:gap-2 sm:p-2">
       <form
         onSubmit={handleSubmit}
         className="flex min-w-0 flex-1 flex-col gap-2 sm:flex-row sm:items-stretch"
       >
-        <div className="relative min-w-0 flex-1">
+        <div className="relative z-10 min-w-0 flex-1">
           <input
             type="search"
             name="q"

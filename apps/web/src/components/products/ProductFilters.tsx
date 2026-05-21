@@ -169,8 +169,7 @@ export function ProductFilters({
   return (
     <aside
       className={
-        className ??
-        "card-surface space-y-5 p-5 lg:sticky lg:top-20 lg:z-10"
+        className ?? "card-surface space-y-5 p-5"
       }
     >
       <h2 className="font-display text-base font-bold text-ink-900">Filters</h2>

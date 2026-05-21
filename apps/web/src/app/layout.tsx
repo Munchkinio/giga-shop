@@ -35,7 +35,7 @@ export default function RootLayout({
   return (
     <html lang="en" className={`${outfit.variable} ${jakarta.variable}`}>
       <body>
-        <header className="sticky top-0 z-40 border-b border-ink-100/80 bg-surface/80 backdrop-blur-md">
+        <header className="sticky top-0 z-50 border-b border-ink-100/80 bg-surface/80 backdrop-blur-md">
           <div className="mx-auto flex max-w-7xl items-center px-4 py-3 sm:px-6 lg:px-8">
             <SiteLogo />
           </div>
