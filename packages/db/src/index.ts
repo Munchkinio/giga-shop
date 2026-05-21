@@ -7,6 +7,7 @@ export {
 } from "./queries/brands";
 export {
   getCategories,
+  getCategoryBreadcrumb,
   getCategoryBySlug,
   getCategoryTree,
 } from "./queries/categories";

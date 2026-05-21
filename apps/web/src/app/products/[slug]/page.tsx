@@ -3,6 +3,7 @@ import Image from "next/image";
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { cache } from "react";
+import { ProductBreadcrumbs } from "@/components/products/ProductBreadcrumbs";
 import { ApiError, fetchProductBySlug } from "@/lib/api-client";
 
 type ProductPageProps = {
@@ -67,13 +68,13 @@ export default async function ProductPage({ params }: ProductPageProps) {
 
   return (
     <div className="space-y-8">
-      <nav className="text-sm text-ink-500">
-        <Link href="/products" className="font-medium text-brand-700 hover:text-brand-800">
-          Products
-        </Link>
-        <span className="mx-2 text-ink-300">/</span>
-        <span className="text-ink-900">{product.name}</span>
-      </nav>
+      <ProductBreadcrumbs
+        productName={product.name}
+        categoryBreadcrumb={
+          product.categoryBreadcrumb ??
+          (product.category ? [product.category] : undefined)
+        }
+      />
 
       <div className="grid gap-10 lg:grid-cols-2">
         <div className="card-surface relative aspect-square overflow-hidden p-0">

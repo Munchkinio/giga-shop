@@ -1,5 +1,10 @@
 import { Prisma } from "@prisma/client";
-import type { Category, CategoryTree, CategoryWithChildren } from "@ecommerce/shared-types";
+import type {
+  Category,
+  CategorySummary,
+  CategoryTree,
+  CategoryWithChildren,
+} from "@ecommerce/shared-types";
 import { prisma } from "../client";
 
 const categorySelect = {
@@ -88,4 +93,47 @@ export async function getCategoryTree(): Promise<CategoryTree> {
   });
   const categories = await attachPaths(rows);
   return buildTree(categories, null);
+}
+
+const categoryBreadcrumbSelect = {
+  id: true,
+  name: true,
+  slug: true,
+  parentId: true,
+  isActive: true,
+} satisfies Prisma.CategorySelect;
+
+type CategoryBreadcrumbRow = Prisma.CategoryGetPayload<{
+  select: typeof categoryBreadcrumbSelect;
+}>;
+
+/**
+ * Returns the category chain from root to the given category (for breadcrumbs).
+ */
+export async function getCategoryBreadcrumb(
+  categoryId: string,
+): Promise<CategorySummary[]> {
+  const chain: CategorySummary[] = [];
+  const seen = new Set<string>();
+  let currentId: string | null = categoryId;
+
+  for (let depth = 0; depth < 20 && currentId; depth++) {
+    if (seen.has(currentId)) {
+      break;
+    }
+    seen.add(currentId);
+
+    const row: CategoryBreadcrumbRow | null = await prisma.category.findUnique({
+      where: { id: currentId },
+      select: categoryBreadcrumbSelect,
+    });
+    if (!row) {
+      break;
+    }
+
+    chain.unshift({ ...row, path: null });
+    currentId = row.parentId;
+  }
+
+  return chain;
 }

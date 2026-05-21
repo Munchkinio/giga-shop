@@ -49,6 +49,8 @@ export type ProductDetail = Product & {
   images: ProductImage[];
   offers: ProductOffer[];
   category?: CategorySummary;
+  /** Root → leaf category path for breadcrumbs. */
+  categoryBreadcrumb?: CategorySummary[];
   brand?: BrandSummary;
 };
 

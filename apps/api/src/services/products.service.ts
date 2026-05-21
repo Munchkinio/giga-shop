@@ -1,4 +1,5 @@
 import {
+  getCategoryBreadcrumb,
   getProductBySlug,
   getProducts,
   type ProductDetailRow,
@@ -111,6 +112,9 @@ export async function getProductDetail(
   }
 
   const detail = mapProductDetail(row);
+  if (row.category) {
+    detail.categoryBreadcrumb = await getCategoryBreadcrumb(row.category.id);
+  }
   await setCached(redis, cacheKey, detail);
   return detail;
 }
