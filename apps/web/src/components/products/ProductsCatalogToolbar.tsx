@@ -6,11 +6,18 @@ import { ProductFilters } from "@/components/products/ProductFilters";
 import { SearchBar } from "@/components/search/SearchBar";
 import { SlideOverPanel } from "@/components/ui/SlideOverPanel";
 import { collectActiveFilters } from "@/lib/active-filters";
-import type { AttributeFacet, BrandSummary, Category } from "@/types";
+import type {
+  AttributeFacet,
+  BrandSummary,
+  Category,
+  FacetBucket,
+} from "@/types";
 
 type ProductsCatalogToolbarProps = {
   categories: Category[];
   brands: BrandSummary[];
+  categoryFacets: FacetBucket[];
+  brandFacets: FacetBucket[];
   attributeFacets?: AttributeFacet[];
 };
 
@@ -33,6 +40,8 @@ function FiltersIcon({ className }: { className?: string }) {
 export function ProductsCatalogToolbar({
   categories,
   brands,
+  categoryFacets,
+  brandFacets,
   attributeFacets,
 }: ProductsCatalogToolbarProps) {
   const searchParams = useSearchParams();
@@ -96,8 +105,8 @@ export function ProductsCatalogToolbar({
         }
       >
         <ProductFilters
-          categories={categories}
-          brands={brands}
+          categoryFacets={categoryFacets}
+          brandFacets={brandFacets}
           attributeFacets={attributeFacets}
           className="space-y-5 p-0 shadow-none [&>h2]:sr-only"
         />

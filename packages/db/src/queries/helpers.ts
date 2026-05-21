@@ -197,6 +197,10 @@ export type ProductFilterSqlOptions = {
   defaultActive?: boolean;
   /** Omit one attribute key when computing disjunctive facets for that key. */
   excludeAttributeKey?: string;
+  /** Omit category filter when computing category facets (disjunctive). */
+  excludeCategory?: boolean;
+  /** Omit brand filter when computing brand facets (disjunctive). */
+  excludeBrand?: boolean;
 };
 
 /** Builds SQL AND clauses for raw FTS queries (table alias `p`). */
@@ -216,7 +220,7 @@ export function buildProductFilterSql(
     return parts.length > 0 ? Prisma.join(parts, " AND ") : Prisma.sql`TRUE`;
   }
 
-  if (filters.categoryId !== undefined) {
+  if (filters.categoryId !== undefined && !options?.excludeCategory) {
     const ids = Array.isArray(filters.categoryId)
       ? filters.categoryId
       : [filters.categoryId];
@@ -227,7 +231,7 @@ export function buildProductFilterSql(
     );
   }
 
-  if (filters.brandId !== undefined) {
+  if (filters.brandId !== undefined && !options?.excludeBrand) {
     const ids = Array.isArray(filters.brandId)
       ? filters.brandId
       : [filters.brandId];

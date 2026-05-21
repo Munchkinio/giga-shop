@@ -1,9 +1,19 @@
 import { Prisma } from "@prisma/client";
-import type { AttributeFacet, Filters } from "@ecommerce/shared-types";
+import type { AttributeFacet, FacetBucket, Filters } from "@ecommerce/shared-types";
 import { prisma } from "../client";
-import { buildProductFilterSql, productSearchMatchSql } from "./helpers";
+import {
+  buildProductFilterSql,
+  productSearchMatchSql,
+  type ProductFilterSqlOptions,
+} from "./helpers";
 
 const MAX_ATTRIBUTE_FACET_VALUES = 50;
+
+export type CatalogFacetsResult = {
+  categories: FacetBucket[];
+  brands: FacetBucket[];
+  attributes: AttributeFacet[];
+};
 
 function parseFacetValue(raw: string): string | number | boolean {
   if (raw === "true") {
@@ -22,16 +32,60 @@ function parseFacetValue(raw: string): string | number | boolean {
 function buildFacetScopeSql(
   filters?: Filters,
   query?: string,
-  excludeAttributeKey?: string,
+  scopeOptions?: ProductFilterSqlOptions,
 ): Prisma.Sql {
-  const parts: Prisma.Sql[] = [
-    buildProductFilterSql(filters, { excludeAttributeKey }),
-  ];
+  const parts: Prisma.Sql[] = [buildProductFilterSql(filters, scopeOptions)];
   const trimmed = query?.trim();
   if (trimmed) {
     parts.push(productSearchMatchSql(trimmed));
   }
   return Prisma.join(parts, " AND ");
+}
+
+/**
+ * Category facets (disjunctive): counts use brand/price/search/attributes, not categoryId.
+ */
+export async function getCategoryFacets(
+  filters?: Filters,
+  query?: string,
+): Promise<FacetBucket[]> {
+  const scopeSql = buildFacetScopeSql(filters, query, { excludeCategory: true });
+
+  return prisma.$queryRaw<FacetBucket[]>`
+    SELECT
+      c.id,
+      c.name,
+      c.slug,
+      COUNT(*)::int AS count
+    FROM products p
+    INNER JOIN categories c ON c.id = p.category_id AND c.is_active = true
+    WHERE ${scopeSql}
+    GROUP BY c.id, c.name, c.slug
+    ORDER BY count DESC, c.name ASC
+  `;
+}
+
+/**
+ * Brand facets (disjunctive): counts use category/price/search/attributes, not brandId.
+ */
+export async function getBrandFacets(
+  filters?: Filters,
+  query?: string,
+): Promise<FacetBucket[]> {
+  const scopeSql = buildFacetScopeSql(filters, query, { excludeBrand: true });
+
+  return prisma.$queryRaw<FacetBucket[]>`
+    SELECT
+      b.id,
+      b.name,
+      b.slug,
+      COUNT(*)::int AS count
+    FROM products p
+    INNER JOIN brands b ON b.id = p.brand_id AND b.is_active = true
+    WHERE ${scopeSql}
+    GROUP BY b.id, b.name, b.slug
+    ORDER BY count DESC, b.name ASC
+  `;
 }
 
 /**
@@ -57,7 +111,9 @@ export async function getAttributeFacets(
 
   return Promise.all(
     keyRows.map(async ({ key }) => {
-      const perKeyScope = buildFacetScopeSql(filters, query, key);
+      const perKeyScope = buildFacetScopeSql(filters, query, {
+        excludeAttributeKey: key,
+      });
       const valueRows = await prisma.$queryRaw<
         Array<{ value: string; count: number }>
       >`
@@ -88,4 +144,25 @@ export async function getAttributeFacets(
       };
     }),
   );
+}
+
+/**
+ * Loads contextual category, brand, and (optionally) attribute facets for the catalog.
+ */
+export async function getCatalogFacets(
+  filters?: Filters,
+  query?: string,
+  options?: { includeAttributes?: boolean },
+): Promise<CatalogFacetsResult> {
+  const includeAttributes = options?.includeAttributes ?? false;
+
+  const [categories, brands, attributes] = await Promise.all([
+    getCategoryFacets(filters, query),
+    getBrandFacets(filters, query),
+    includeAttributes
+      ? getAttributeFacets(filters, query)
+      : Promise.resolve([]),
+  ]);
+
+  return { categories, brands, attributes };
 }

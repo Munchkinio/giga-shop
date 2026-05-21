@@ -11,6 +11,12 @@ import {
   fetchProducts,
   fetchSearch,
 } from "@/lib/api-client";
+import {
+  brandIdsFromFilters,
+  categoryIdFromFilters,
+  mergeBrandFacetBuckets,
+  mergeCategoryFacetBuckets,
+} from "@/lib/filter-facets";
 import { parseSearchParams } from "@/lib/parse-search-params";
 import { DEFAULT_SITE_DESCRIPTION } from "@/lib/seo";
 
@@ -65,6 +71,21 @@ export default async function ProductsPage({ searchParams }: ProductsPageProps) 
     fetchBrands(),
   ]);
 
+  const selectedCategoryId = categoryIdFromFilters(
+    searchRequest.filters?.categoryId,
+  );
+  const selectedBrandIds = brandIdsFromFilters(searchRequest.filters?.brandId);
+  const categoryFacets = mergeCategoryFacetBuckets(
+    result.facets?.categories,
+    selectedCategoryId,
+    categories,
+  );
+  const brandFacets = mergeBrandFacetBuckets(
+    result.facets?.brands,
+    selectedBrandIds,
+    brands,
+  );
+
   return (
     <div className="space-y-8">
       <section className="card-surface relative overflow-hidden p-6 sm:p-8">
@@ -103,6 +124,8 @@ export default async function ProductsPage({ searchParams }: ProductsPageProps) 
         <ProductsCatalogToolbar
           categories={categories}
           brands={brands}
+          categoryFacets={categoryFacets}
+          brandFacets={brandFacets}
           attributeFacets={result.facets?.attributes}
         />
       </Suspense>
@@ -143,8 +166,8 @@ export default async function ProductsPage({ searchParams }: ProductsPageProps) 
         >
           <div className="hidden lg:block lg:col-start-1 lg:row-start-1">
             <ProductFilters
-              categories={categories}
-              brands={brands}
+              categoryFacets={categoryFacets}
+              brandFacets={brandFacets}
               attributeFacets={result.facets?.attributes}
             />
           </div>

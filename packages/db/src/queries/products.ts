@@ -1,8 +1,7 @@
 import { Prisma } from "@prisma/client";
 import type { SearchRequest, SearchResult } from "@ecommerce/shared-types";
 import { prisma } from "../client";
-import { getAttributeFacets } from "./facets";
-import type { AttributeFacet } from "@ecommerce/shared-types";
+import { getCatalogFacets, type CatalogFacetsResult } from "./facets";
 import {
   buildProductFilterSql,
   buildProductWhere,
@@ -17,29 +16,36 @@ function hasCategoryFilter(request: SearchRequest): boolean {
   return request.filters?.categoryId !== undefined;
 }
 
-function startAttributeFacets(request: SearchRequest) {
-  if (request.includeFacets === false || !hasCategoryFilter(request)) {
+function startCatalogFacets(request: SearchRequest) {
+  if (request.includeFacets === false) {
     return null;
   }
-  return getAttributeFacets(request.filters, request.query);
+  return getCatalogFacets(request.filters, request.query, {
+    includeAttributes: hasCategoryFilter(request),
+  });
 }
 
-function mergeAttributeFacets(
+function mergeCatalogFacets(
   result: SearchResult,
-  facetsPromise: Promise<AttributeFacet[]> | null,
+  facetsPromise: Promise<CatalogFacetsResult> | null,
 ): Promise<SearchResult> {
   if (!facetsPromise) {
     return Promise.resolve(result);
   }
-  return facetsPromise.then((attributes) => {
-    if (attributes.length === 0) {
+  return facetsPromise.then(({ categories, brands, attributes }) => {
+    const facets = {
+      ...(categories.length > 0 ? { categories } : {}),
+      ...(brands.length > 0 ? { brands } : {}),
+      ...(attributes.length > 0 ? { attributes } : {}),
+    };
+    if (Object.keys(facets).length === 0) {
       return result;
     }
     return {
       ...result,
       facets: {
         ...result.facets,
-        attributes,
+        ...facets,
       },
     };
   });
@@ -101,7 +107,7 @@ async function listProductsPrisma(
   request: SearchRequest,
   pagination: PaginationParams,
 ): Promise<SearchResult> {
-  const facetsPromise = startAttributeFacets(request);
+  const facetsPromise = startCatalogFacets(request);
   const sort = resolveSort(request.sort, Boolean(request.query));
   const where = buildProductWhere(request.filters);
   const orderBy = toPrismaOrderBy(sort);
@@ -123,7 +129,7 @@ async function listProductsPrisma(
     const items = pageRows.map(mapToProductListItem);
     const total = await prisma.product.count({ where });
 
-    return mergeAttributeFacets(
+    return mergeCatalogFacets(
       {
         items,
         total,
@@ -154,7 +160,7 @@ async function listProductsPrisma(
   const hasMore = rows.length > pagination.pageSize;
   const pageRows = hasMore ? rows.slice(0, pagination.pageSize) : rows;
 
-  return mergeAttributeFacets(
+  return mergeCatalogFacets(
     {
       items: pageRows.map(mapToProductListItem),
       total,
@@ -173,7 +179,7 @@ async function searchProductsFts(
   request: SearchRequest,
   pagination: PaginationParams,
 ): Promise<SearchResult> {
-  const facetsPromise = startAttributeFacets(request);
+  const facetsPromise = startCatalogFacets(request);
   const query = request.query!.trim();
   const sort = resolveSort(request.sort, true);
   const filterSql = buildProductFilterSql(request.filters);
@@ -235,7 +241,7 @@ async function searchProductsFts(
   const items = await fetchProductsByIds(ids);
   const total = Number(countRows[0]?.count ?? 0);
 
-  return mergeAttributeFacets(
+  return mergeCatalogFacets(
     {
       items,
       total,

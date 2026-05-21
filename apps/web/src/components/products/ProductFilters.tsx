@@ -14,21 +14,25 @@ import {
   type SelectedAttributes,
 } from "@/lib/attribute-filters";
 import { resetPaginationPosition } from "@/lib/pagination-mode";
-import type { AttributeFacet, BrandSummary, Category } from "@/types";
+import {
+  facetBucketsToBrandSummaries,
+  formatFacetCountLabel,
+} from "@/lib/filter-facets";
+import type { AttributeFacet, FacetBucket } from "@/types";
 
 const PRICE_RANGE_MIN = 0;
 const PRICE_RANGE_MAX = 5000;
 
 type ProductFiltersProps = {
-  categories: Category[];
-  brands: BrandSummary[];
+  categoryFacets: FacetBucket[];
+  brandFacets: FacetBucket[];
   attributeFacets?: AttributeFacet[];
   className?: string;
 };
 
 export function ProductFilters({
-  categories,
-  brands,
+  categoryFacets,
+  brandFacets,
   attributeFacets,
   className,
 }: ProductFiltersProps) {
@@ -142,11 +146,13 @@ export function ProductFilters({
 
   const categoryOptions = [
     { value: "", label: "All categories" },
-    ...categories.map((category) => ({
-      value: category.id,
-      label: category.name,
+    ...categoryFacets.map((facet) => ({
+      value: facet.id,
+      label: formatFacetCountLabel(facet.name, facet.count),
     })),
   ];
+
+  const brandsForSelect = facetBucketsToBrandSummaries(brandFacets);
 
   const ratingOptions = [
     { value: "", label: "Any" },
@@ -189,7 +195,7 @@ export function ProductFilters({
       <div className="block space-y-1.5">
         <span className="filter-label">Brands</span>
         <BrandMultiSelect
-          brands={brands}
+          brands={brandsForSelect}
           selectedIds={getSelectedBrandIds()}
           onChange={updateBrandIds}
           disabled={isPending}

@@ -24,7 +24,13 @@ export {
   searchProducts,
 } from "./queries/products";
 export type { ProductDetailRow } from "./queries/products";
-export { getAttributeFacets } from "./queries/facets";
+export {
+  getAttributeFacets,
+  getBrandFacets,
+  getCatalogFacets,
+  getCategoryFacets,
+} from "./queries/facets";
+export type { CatalogFacetsResult } from "./queries/facets";
 export { getSearchSuggestions } from "./queries/search-suggest";
 export {
   buildProductFilterSql,
