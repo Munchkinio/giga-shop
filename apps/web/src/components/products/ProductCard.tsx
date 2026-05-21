@@ -1,5 +1,7 @@
 import Image from "next/image";
 import Link from "next/link";
+import { ListPrice } from "@/components/products/ListPrice";
+import { getListPriceDisplay } from "@/lib/list-price";
 import type { ProductListItem } from "@/types";
 
 type ProductCardProps = {
@@ -8,6 +10,7 @@ type ProductCardProps = {
 };
 
 export function ProductCard({ product, onQuickView }: ProductCardProps) {
+  const listPrice = getListPriceDisplay(product);
   const imageUrl =
     product.primaryImageUrl ??
     `https://picsum.photos/seed/${product.id}/400/400`;
@@ -56,14 +59,20 @@ export function ProductCard({ product, onQuickView }: ProductCardProps) {
             {product.shortDescription}
           </p>
         ) : null}
-        <div className="mt-auto flex items-end justify-between gap-2 border-t border-ink-100/80 pt-3">
-          <span className="font-display text-lg font-bold text-ink-900">
-            ${product.basePrice}
-          </span>
-          <span className="rounded-lg bg-ink-50 px-2 py-0.5 text-xs font-medium text-ink-600">
+        <div className="mt-auto space-y-1.5 border-t border-ink-100/80 pt-3">
+          <ListPrice
+            amount={listPrice.amount}
+            showFrom={listPrice.showFrom}
+            size="card"
+            className="w-full min-w-0"
+          />
+          <p className="w-fit rounded-lg bg-ink-50 px-2 py-0.5 text-xs font-medium tabular-nums text-ink-600">
             ★ {product.ratingAvg}
-            <span className="text-ink-400"> ({product.ratingCount})</span>
-          </span>
+            <span className="text-ink-400">
+              {" "}
+              ({product.ratingCount.toLocaleString()})
+            </span>
+          </p>
         </div>
       </div>
     </article>

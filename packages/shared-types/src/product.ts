@@ -74,4 +74,8 @@ export type ProductListItem = Pick<
   primaryImageUrl?: string | null;
   brandName?: string;
   categoryName?: string;
+  /** Lowest price among in-stock offers; omitted when none. */
+  minOfferPrice?: string | null;
+  /** Count of in-stock offers (for “From” label when more than one seller). */
+  offerCount?: number;
 };

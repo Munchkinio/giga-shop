@@ -3,7 +3,9 @@ import Image from "next/image";
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { cache } from "react";
+import { ListPrice } from "@/components/products/ListPrice";
 import { ProductBreadcrumbs } from "@/components/products/ProductBreadcrumbs";
+import { getOfferPriceDisplay } from "@/lib/list-price";
 import { ApiError, fetchProductBySlug } from "@/lib/api-client";
 
 type ProductPageProps = {
@@ -65,6 +67,7 @@ export default async function ProductPage({ params }: ProductPageProps) {
   const primaryImage =
     product.images.find((img) => img.isPrimary) ?? product.images[0];
   const primaryImageUrl = getPrimaryImageUrl(product);
+  const listPrice = getOfferPriceDisplay(product.basePrice, product.offers);
 
   return (
     <div className="space-y-8">
@@ -97,12 +100,12 @@ export default async function ProductPage({ params }: ProductPageProps) {
             <p className="mt-1 text-sm text-ink-500">SKU: {product.sku}</p>
           </div>
 
-          <div className="flex items-baseline gap-3">
-            <span className="font-display text-3xl font-bold text-ink-900">
-              ${product.basePrice}
-            </span>
-            <span className="text-sm text-ink-500">{product.currency}</span>
-          </div>
+          <ListPrice
+            amount={listPrice.amount}
+            showFrom={listPrice.showFrom}
+            size="page"
+            currency={product.currency}
+          />
 
           <p className="text-sm text-ink-600">
             ★ {product.ratingAvg} ({product.ratingCount} reviews) ·{" "}

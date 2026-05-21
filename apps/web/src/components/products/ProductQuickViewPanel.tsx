@@ -5,7 +5,9 @@ import Link from "next/link";
 import { useCallback, useEffect, useState } from "react";
 import { createPortal } from "react-dom";
 import { ApiError, fetchProductBySlug } from "@/lib/api-client";
+import { ListPrice } from "@/components/products/ListPrice";
 import { formatAttributeKey } from "@/lib/attribute-filters";
+import { getOfferPriceDisplay } from "@/lib/list-price";
 import type { ProductDetail } from "@/types";
 
 type ProductQuickViewPanelProps = {
@@ -27,6 +29,9 @@ export function ProductQuickViewPanel({
 }: ProductQuickViewPanelProps) {
   const open = slug !== null;
   const [product, setProduct] = useState<ProductDetail | null>(null);
+  const listPrice = product
+    ? getOfferPriceDisplay(product.basePrice, product.offers)
+    : null;
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [mounted, setMounted] = useState(false);
@@ -172,12 +177,14 @@ export function ProductQuickViewPanel({
                 <p className="mt-1 text-xs text-ink-500">SKU: {product.sku}</p>
               </div>
 
-              <div className="flex items-baseline gap-2">
-                <span className="font-display text-2xl font-bold text-ink-900">
-                  ${product.basePrice}
-                </span>
-                <span className="text-sm text-ink-500">{product.currency}</span>
-              </div>
+              {listPrice ? (
+                <ListPrice
+                  amount={listPrice.amount}
+                  showFrom={listPrice.showFrom}
+                  size="panel"
+                  currency={product.currency}
+                />
+              ) : null}
 
               <p className="text-sm text-ink-600">
                 ★ {product.ratingAvg} ({product.ratingCount} reviews)

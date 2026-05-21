@@ -38,6 +38,12 @@ function attributeSqlClause(key: string, value: AttributeFilterValue): Prisma.Sq
   return Prisma.sql`p.attributes @> ${JSON.stringify({ [key]: value })}::jsonb`;
 }
 
+/** In-stock offers used for list pricing and offer counts. */
+export const inStockOfferWhere = {
+  isAvailable: true,
+  stockQuantity: { gt: 0 },
+} satisfies Prisma.ProductOfferWhereInput;
+
 /** Select shape for catalog list / search results. */
 export const productListItemSelect = {
   id: true,
@@ -58,6 +64,11 @@ export const productListItemSelect = {
     take: 1,
     select: { url: true },
   },
+  offers: {
+    where: inStockOfferWhere,
+    select: { price: true },
+    orderBy: { price: "asc" as const },
+  },
   category: { select: { name: true } },
   brand: { select: { name: true } },
 } satisfies Prisma.ProductSelect;
@@ -67,6 +78,9 @@ export type ProductListItemRow = Prisma.ProductGetPayload<{
 }>;
 
 export function mapToProductListItem(row: ProductListItemRow): ProductListItem {
+  const offerCount = row.offers.length;
+  const minOffer = row.offers[0]?.price;
+
   return {
     id: row.id,
     sku: row.sku,
@@ -84,6 +98,8 @@ export function mapToProductListItem(row: ProductListItemRow): ProductListItem {
     primaryImageUrl: row.images[0]?.url ?? null,
     brandName: row.brand.name,
     categoryName: row.category.name,
+    minOfferPrice: minOffer ? minOffer.toString() : null,
+    offerCount: offerCount > 0 ? offerCount : undefined,
   };
 }
 
@@ -128,12 +144,7 @@ export function buildProductWhere(filters?: Filters): Prisma.ProductWhereInput {
   }
 
   if (filters.inStock === true) {
-    where.offers = {
-      some: {
-        isAvailable: true,
-        stockQuantity: { gt: 0 },
-      },
-    };
+    where.offers = { some: inStockOfferWhere };
   }
 
   return where;
