@@ -7,7 +7,11 @@
     "build": "turbo run build",
     "lint": "turbo run lint",
     "format": "turbo run format",
-    "clean": "turbo run clean"
+    "clean": "turbo run clean",
+    "db:up": "docker compose up -d postgres redis",
+    "db:down": "docker compose down",
+    "db:reset": "docker compose down -v && docker compose up -d postgres redis",
+    "db:logs": "docker compose logs -f"
   },
   "devDependencies": {
     "prettier": "^3.5.3",
