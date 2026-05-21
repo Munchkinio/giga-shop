@@ -170,6 +170,54 @@ export function resolveSort(
   return { field: "popularityScore", order: "desc" };
 }
 
+/**
+ * List/sort price: lowest in-stock offer, or `base_price` when no offers in stock.
+ */
+export function productMinListPriceSql(): Prisma.Sql {
+  return Prisma.sql`
+    COALESCE(
+      (
+        SELECT MIN(o.price)
+        FROM product_offers o
+        WHERE o.product_id = p.id
+          AND o.is_available = true
+          AND o.stock_quantity > 0
+      ),
+      p.base_price
+    )`;
+}
+
+/** ORDER BY clause for raw catalog queries (`p` = products). */
+export function buildProductListOrderSql(
+  sort: SortOptions,
+  options?: { query?: string },
+): Prisma.Sql {
+  const dir = sort.order === "asc" ? Prisma.sql`ASC` : Prisma.sql`DESC`;
+
+  if (options?.query && sort.field === "relevance") {
+    const query = options.query;
+    return Prisma.sql`
+      ts_rank(p.search_vector, plainto_tsquery('english', ${query})) DESC,
+      p.popularity_score DESC,
+      p.id DESC`;
+  }
+
+  switch (sort.field) {
+    case "ratingAvg":
+      return Prisma.sql`p.rating_avg ${dir}, p.id ${dir}`;
+    case "basePrice":
+      return Prisma.sql`${productMinListPriceSql()} ${dir}, p.id ${dir}`;
+    case "createdAt":
+      return Prisma.sql`p.created_at ${dir}, p.id ${dir}`;
+    case "name":
+      return Prisma.sql`p.name ${dir}, p.id ${dir}`;
+    case "relevance":
+    case "popularityScore":
+    default:
+      return Prisma.sql`p.popularity_score ${dir}, p.id ${dir}`;
+  }
+}
+
 export function toPrismaOrderBy(
   sort: SortOptions,
 ): Prisma.ProductOrderByWithRelationInput[] {

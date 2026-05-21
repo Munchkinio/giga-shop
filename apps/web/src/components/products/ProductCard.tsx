@@ -1,7 +1,7 @@
 import Image from "next/image";
 import Link from "next/link";
 import { ListPrice } from "@/components/products/ListPrice";
-import { getListPriceDisplay } from "@/lib/list-price";
+import { formatSellerCount, getListPriceDisplay } from "@/lib/list-price";
 import type { ProductListItem } from "@/types";
 
 type ProductCardProps = {
@@ -11,6 +11,7 @@ type ProductCardProps = {
 
 export function ProductCard({ product, onQuickView }: ProductCardProps) {
   const listPrice = getListPriceDisplay(product);
+  const sellerLabel = formatSellerCount(product.offerCount);
   const imageUrl =
     product.primaryImageUrl ??
     `https://picsum.photos/seed/${product.id}/400/400`;
@@ -60,12 +61,19 @@ export function ProductCard({ product, onQuickView }: ProductCardProps) {
           </p>
         ) : null}
         <div className="mt-auto flex items-center justify-between gap-2 border-t border-ink-100/80 pt-3 sm:flex-col sm:items-stretch sm:gap-1.5">
-          <ListPrice
-            amount={listPrice.amount}
-            showFrom={listPrice.showFrom}
-            size="card"
-            className="min-w-0 flex-1 flex-nowrap overflow-hidden sm:w-full sm:flex-none"
-          />
+          <div className="min-w-0 flex-1 sm:w-full">
+            <ListPrice
+              amount={listPrice.amount}
+              showFrom={listPrice.showFrom}
+              size="card"
+              className="min-w-0 flex-nowrap overflow-hidden"
+            />
+            {sellerLabel ? (
+              <p className="mt-0.5 text-[10px] font-medium text-ink-500 sm:text-xs">
+                {sellerLabel}
+              </p>
+            ) : null}
+          </div>
           <p className="shrink-0 rounded-lg bg-ink-50 px-2 py-0.5 text-[11px] font-medium tabular-nums text-ink-600 sm:w-fit sm:text-xs">
             ★ {product.ratingAvg}
             <span className="text-ink-400">

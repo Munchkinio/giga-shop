@@ -1,10 +1,15 @@
 import { Prisma } from "@prisma/client";
-import type { SearchRequest, SearchResult } from "@ecommerce/shared-types";
+import type {
+  SearchRequest,
+  SearchResult,
+  SortOptions,
+} from "@ecommerce/shared-types";
 import { prisma } from "../client";
 import { getCategoryDescendantIds } from "./categories";
 import { getCatalogFacets, type CatalogFacetsResult } from "./facets";
 import {
   buildProductFilterSql,
+  buildProductListOrderSql,
   buildProductWhere,
   mapToProductListItem,
   productListItemSelect,
@@ -129,6 +134,75 @@ async function fetchProductsByIds(
     .map(mapToProductListItem);
 }
 
+/**
+ * Lists products ordered by min in-stock offer price (raw SQL — Prisma cannot sort on that).
+ */
+async function listProductsByListPrice(
+  request: SearchRequest,
+  pagination: PaginationParams,
+  sort: SortOptions,
+  facetsPromise: Promise<CatalogFacetsResult> | null,
+): Promise<SearchResult> {
+  const filterSql = buildProductFilterSql(request.filters);
+  const orderSql = buildProductListOrderSql(sort);
+  const take = pagination.limit + 1;
+  const skip =
+    pagination.type === "offset"
+      ? (pagination.page - 1) * pagination.pageSize
+      : 0;
+
+  const cursorSql =
+    pagination.type === "cursor" && pagination.cursor
+      ? Prisma.sql`AND p.id < ${pagination.cursor}::uuid`
+      : Prisma.sql``;
+
+  const [idRows, countRows] = await Promise.all([
+    prisma.$queryRaw<Array<{ id: string }>>`
+      SELECT p.id
+      FROM products p
+      WHERE ${filterSql}
+        ${cursorSql}
+      ORDER BY ${orderSql}
+      LIMIT ${take}
+      OFFSET ${skip}
+    `,
+    prisma.$queryRaw<Array<{ count: bigint }>>`
+      SELECT COUNT(*)::bigint AS count
+      FROM products p
+      WHERE ${filterSql}
+    `,
+  ]);
+
+  const hasMore = idRows.length > pagination.limit;
+  const ids = (hasMore ? idRows.slice(0, pagination.limit) : idRows).map(
+    (r) => r.id,
+  );
+  const items = await fetchProductsByIds(ids);
+  const total = Number(countRows[0]?.count ?? 0);
+
+  return mergeCatalogFacets(
+    {
+      items,
+      total,
+      pagination: {
+        type: pagination.type,
+        ...(pagination.type === "offset"
+          ? {
+              page: pagination.page,
+              pageSize: pagination.pageSize,
+            }
+          : {}),
+        nextCursor:
+          pagination.type === "cursor" && hasMore
+            ? (ids[ids.length - 1] ?? null)
+            : null,
+        hasMore,
+      },
+    },
+    facetsPromise,
+  );
+}
+
 async function listProductsPrisma(
   request: SearchRequest,
   pagination: PaginationParams,
@@ -136,6 +210,16 @@ async function listProductsPrisma(
   const expandedRequest = await expandCategoryFilters(request);
   const facetsPromise = startCatalogFacets(request);
   const sort = resolveSort(expandedRequest.sort, Boolean(expandedRequest.query));
+
+  if (sort.field === "basePrice") {
+    return listProductsByListPrice(
+      expandedRequest,
+      pagination,
+      sort,
+      facetsPromise,
+    );
+  }
+
   const where = buildProductWhere(expandedRequest.filters);
   const orderBy = toPrismaOrderBy(sort);
   const take = pagination.limit + 1;
@@ -216,27 +300,7 @@ async function searchProductsFts(
       ? (pagination.page - 1) * pagination.pageSize
       : 0;
 
-  const orderSql = (() => {
-    if (sort.field === "relevance") {
-      return Prisma.sql`
-        ts_rank(p.search_vector, plainto_tsquery('english', ${query})) DESC,
-        p.popularity_score DESC,
-        p.id DESC`;
-    }
-    const dir = sort.order === "asc" ? Prisma.sql`ASC` : Prisma.sql`DESC`;
-    switch (sort.field) {
-      case "ratingAvg":
-        return Prisma.sql`p.rating_avg ${dir}, p.id ${dir}`;
-      case "basePrice":
-        return Prisma.sql`p.base_price ${dir}, p.id ${dir}`;
-      case "createdAt":
-        return Prisma.sql`p.created_at ${dir}, p.id ${dir}`;
-      case "name":
-        return Prisma.sql`p.name ${dir}, p.id ${dir}`;
-      default:
-        return Prisma.sql`p.popularity_score ${dir}, p.id ${dir}`;
-    }
-  })();
+  const orderSql = buildProductListOrderSql(sort, { query });
 
   const cursorSql =
     pagination.type === "cursor" && pagination.cursor

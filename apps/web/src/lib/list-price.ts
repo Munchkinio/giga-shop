@@ -40,6 +40,14 @@ export function getOfferPriceDisplay(
 }
 
 /** Catalog list row (pre-aggregated on the API). */
+/** e.g. "3 sellers" when multiple in-stock offers; null for 0–1. */
+export function formatSellerCount(offerCount: number | undefined): string | null {
+  if (!offerCount || offerCount <= 1) {
+    return null;
+  }
+  return `${offerCount} sellers`;
+}
+
 export function getListPriceDisplay(product: ProductListItem): ListPriceDisplay {
   if (product.minOfferPrice && (product.offerCount ?? 0) > 0) {
     return {
