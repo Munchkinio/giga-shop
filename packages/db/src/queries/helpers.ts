@@ -127,6 +127,15 @@ export function buildProductWhere(filters?: Filters): Prisma.ProductWhereInput {
     where.AND = [...toAndArray(where.AND), ...attributeClauses];
   }
 
+  if (filters.inStock === true) {
+    where.offers = {
+      some: {
+        isAvailable: true,
+        stockQuantity: { gt: 0 },
+      },
+    };
+  }
+
   return where;
 }
 
@@ -262,6 +271,17 @@ export function buildProductFilterSql(
     )) {
       parts.push(attributeSqlClause(key, value));
     }
+  }
+
+  if (filters.inStock === true) {
+    parts.push(Prisma.sql`
+      EXISTS (
+        SELECT 1
+        FROM product_offers o
+        WHERE o.product_id = p.id
+          AND o.is_available = true
+          AND o.stock_quantity > 0
+      )`);
   }
 
   return parts.length > 0 ? Prisma.join(parts, " AND ") : Prisma.sql`TRUE`;

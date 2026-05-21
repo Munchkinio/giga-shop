@@ -119,6 +119,10 @@ export function collectActiveFilters(
     });
   }
 
+  if (params.get("inStock") === "true") {
+    chips.push({ id: "inStock", label: "In stock only" });
+  }
+
   return chips;
 }
 
@@ -167,6 +171,11 @@ export function removeActiveFilter(
     return;
   }
 
+  if (chipId === "inStock") {
+    params.delete("inStock");
+    return;
+  }
+
   if (chipId.startsWith("attr:")) {
     const rest = chipId.slice("attr:".length);
     const separator = rest.indexOf("::");
@@ -198,6 +207,7 @@ export function clearAllCatalogFilters(params: URLSearchParams): void {
   params.delete("priceMin");
   params.delete("priceMax");
   params.delete("ratingMin");
+  params.delete("inStock");
   params.delete("attributes");
 }
 

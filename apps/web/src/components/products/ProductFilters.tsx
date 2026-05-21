@@ -222,6 +222,31 @@ export function ProductFilters({
         </p>
       )}
 
+      <div className="flex items-center gap-2.5 rounded-xl border border-ink-100 bg-canvas/50 px-3 py-2.5">
+        <input
+          id="filter-in-stock"
+          type="checkbox"
+          checked={searchParams.get("inStock") === "true"}
+          onChange={() => {
+            const params = new URLSearchParams(searchParams.toString());
+            if (params.get("inStock") === "true") {
+              params.delete("inStock");
+            } else {
+              params.set("inStock", "true");
+            }
+            pushSearchParams(params);
+          }}
+          disabled={isPending}
+          className="size-4 shrink-0 rounded border-ink-300 text-brand-600 focus:ring-brand-400"
+        />
+        <label
+          htmlFor="filter-in-stock"
+          className="cursor-pointer text-sm font-medium text-ink-800"
+        >
+          In stock only
+        </label>
+      </div>
+
       <div className="block space-y-2">
         <span className="filter-label">Price range</span>
         <PriceRangeSlider

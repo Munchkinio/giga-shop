@@ -24,6 +24,8 @@ export const filtersSchema = z
     priceMax: z.coerce.number().nonnegative().optional(),
     ratingMin: z.coerce.number().min(0).max(5).optional(),
     isActive: z.boolean().optional(),
+    /** When true, only products with at least one in-stock offer. */
+    inStock: z.coerce.boolean().optional(),
     attributes: productAttributesFilterSchema.optional(),
   })
   .refine(

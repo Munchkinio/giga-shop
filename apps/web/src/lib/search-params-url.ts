@@ -39,6 +39,9 @@ export function searchRequestToQueryRecord(
   if (filters?.isActive !== undefined) {
     params.isActive = String(filters.isActive);
   }
+  if (filters?.inStock === true) {
+    params.inStock = "true";
+  }
   if (filters?.attributes) {
     params.attributes = JSON.stringify(filters.attributes);
   }

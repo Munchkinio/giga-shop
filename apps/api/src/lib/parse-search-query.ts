@@ -75,6 +75,7 @@ export function parseSearchRequestQuery(
       priceMax: query.priceMax,
       ratingMin: query.ratingMin,
       isActive: parseBoolean(query.isActive),
+      inStock: parseBoolean(query.inStock),
       attributes: parseAttributes(query.attributes),
     },
   };

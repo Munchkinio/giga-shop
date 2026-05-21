@@ -61,6 +61,9 @@ export function describeSavedSearch(saved: SavedSearch): string {
   if (saved.filters?.ratingMin !== undefined) {
     parts.push("rating");
   }
+  if (saved.filters?.inStock === true) {
+    parts.push("in stock");
+  }
   if (saved.sort) {
     parts.push(`sort: ${saved.sort.field}`);
   }

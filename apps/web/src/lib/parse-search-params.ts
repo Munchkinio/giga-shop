@@ -60,6 +60,8 @@ export function parseSearchParams(
       priceMax: flat.priceMax,
       ratingMin: flat.ratingMin,
       isActive: parseBoolean(flat.isActive),
+      inStock:
+        parseBoolean(flat.inStock) === true ? true : undefined,
       attributes:
         typeof flat.attributes === "string"
           ? (() => {
