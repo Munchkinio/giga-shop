@@ -47,23 +47,34 @@ async function expandCategoryFilters(
   };
 }
 
-function startCatalogFacets(request: SearchRequest) {
+/**
+ * Facet counts must use the same expanded category branch as product listing
+ * (leaf products live under descendant categories, not the parent row id).
+ */
+async function startCatalogFacets(
+  request: SearchRequest,
+): Promise<CatalogFacetsResult | null> {
   if (request.includeFacets === false) {
     return null;
   }
-  return getCatalogFacets(request.filters, request.query, {
+  const expanded = await expandCategoryFilters(request);
+  return getCatalogFacets(expanded.filters, expanded.query, {
     includeAttributes: hasCategoryFilter(request),
   });
 }
 
 function mergeCatalogFacets(
   result: SearchResult,
-  facetsPromise: Promise<CatalogFacetsResult> | null,
+  facetsPromise: Promise<CatalogFacetsResult | null> | null,
 ): Promise<SearchResult> {
   if (!facetsPromise) {
     return Promise.resolve(result);
   }
-  return facetsPromise.then(({ categories, brands, attributes }) => {
+  return facetsPromise.then((facetRows) => {
+    if (!facetRows) {
+      return result;
+    }
+    const { categories, brands, attributes } = facetRows;
     const facets = {
       ...(categories.length > 0 ? { categories } : {}),
       ...(brands.length > 0 ? { brands } : {}),
@@ -141,7 +152,7 @@ async function listProductsByListPrice(
   request: SearchRequest,
   pagination: PaginationParams,
   sort: SortOptions,
-  facetsPromise: Promise<CatalogFacetsResult> | null,
+  facetsPromise: Promise<CatalogFacetsResult | null> | null,
 ): Promise<SearchResult> {
   const filterSql = buildProductFilterSql(request.filters);
   const orderSql = buildProductListOrderSql(sort);
