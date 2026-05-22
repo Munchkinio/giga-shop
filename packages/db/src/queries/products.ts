@@ -11,6 +11,7 @@ import {
   buildProductFilterSql,
   buildProductListOrderSql,
   buildProductWhere,
+  hasListPriceFilter,
   mapToProductListItem,
   productListItemSelect,
   productSearchMatchSql,
@@ -222,7 +223,7 @@ async function listProductsPrisma(
   const facetsPromise = startCatalogFacets(request);
   const sort = resolveSort(expandedRequest.sort, Boolean(expandedRequest.query));
 
-  if (sort.field === "basePrice") {
+  if (sort.field === "basePrice" || hasListPriceFilter(expandedRequest.filters)) {
     return listProductsByListPrice(
       expandedRequest,
       pagination,

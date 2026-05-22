@@ -1,7 +1,6 @@
 "use client";
 
 import { useCallback, useEffect, useRef, useState } from "react";
-import { useDebounce } from "@/hooks/useDebounce";
 
 type PriceRangeSliderProps = {
   min: number;
@@ -45,17 +44,21 @@ export function PriceRangeSlider({
   const localMinRef = useRef(localMin);
   const localMaxRef = useRef(localMax);
   const onChangeRef = useRef(onChange);
-
-  const debouncedMin = useDebounce(localMin, 400);
-  const debouncedMax = useDebounce(localMax, 400);
+  const skipSyncRef = useRef(false);
 
   useEffect(() => {
     onChangeRef.current = onChange;
   }, [onChange]);
 
   useEffect(() => {
+    if (skipSyncRef.current) {
+      skipSyncRef.current = false;
+      return;
+    }
     setLocalMin(valueMin);
     setLocalMax(valueMax);
+    localMinRef.current = valueMin;
+    localMaxRef.current = valueMax;
   }, [valueMin, valueMax]);
 
   useEffect(() => {
@@ -63,29 +66,28 @@ export function PriceRangeSlider({
     localMaxRef.current = localMax;
   }, [localMin, localMax]);
 
-  useEffect(() => {
-    // Wait until drag ends; avoid SSR navigations on every debounce tick while dragging.
-    if (dragging) {
+  const commitRange = useCallback(() => {
+    if (disabled) {
       return;
     }
-    if (debouncedMin === valueMin && debouncedMax === valueMax) {
+
+    let nextMin = localMinRef.current;
+    let nextMax = localMaxRef.current;
+    if (nextMin > nextMax) {
+      [nextMin, nextMax] = [nextMax, nextMin];
+      localMinRef.current = nextMin;
+      localMaxRef.current = nextMax;
+      setLocalMin(nextMin);
+      setLocalMax(nextMax);
+    }
+
+    if (nextMin === valueMin && nextMax === valueMax) {
       return;
     }
-    // Local state already matches URL (props) but debounce is still catching up — do not
-    // push stale debounced values or router.push will clear the filter and loop refreshes.
-    if (localMin === valueMin && localMax === valueMax) {
-      return;
-    }
-    onChangeRef.current(debouncedMin, debouncedMax);
-  }, [
-    debouncedMin,
-    debouncedMax,
-    valueMin,
-    valueMax,
-    localMin,
-    localMax,
-    dragging,
-  ]);
+
+    skipSyncRef.current = true;
+    onChangeRef.current(nextMin, nextMax);
+  }, [disabled, valueMin, valueMax]);
 
   const span = max - min;
   const minPercent = span > 0 ? ((localMin - min) / span) * 100 : 0;
@@ -140,6 +142,7 @@ export function PriceRangeSlider({
         thumb.removeEventListener("pointerup", handleUp);
         thumb.removeEventListener("pointercancel", handleUp);
         setDragging(null);
+        commitRange();
       };
 
       applyValue(handle, valueFromClientX(event.clientX));
@@ -147,7 +150,7 @@ export function PriceRangeSlider({
       thumb.addEventListener("pointerup", handleUp);
       thumb.addEventListener("pointercancel", handleUp);
     },
-    [applyValue, disabled, valueFromClientX],
+    [applyValue, commitRange, disabled, valueFromClientX],
   );
 
   const handleTrackPointerDown = useCallback(
@@ -163,8 +166,9 @@ export function PriceRangeSlider({
           ? "min"
           : "max";
       applyValue(handle, value);
+      commitRange();
     },
-    [applyValue, disabled, valueFromClientX],
+    [applyValue, commitRange, disabled, valueFromClientX],
   );
 
   const handleKeyDown = useCallback(
@@ -186,8 +190,9 @@ export function PriceRangeSlider({
 
       event.preventDefault();
       applyValue(handle, next);
+      commitRange();
     },
-    [applyValue, disabled],
+    [applyValue, commitRange, disabled],
   );
 
   return (

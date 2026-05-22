@@ -174,6 +174,11 @@ export function resolveSort(
 /**
  * List/sort/filter price: lowest in-stock offer, or `base_price` when no offers in stock.
  */
+/** True when catalog should filter by list price (min in-stock offer). */
+export function hasListPriceFilter(filters?: Filters): boolean {
+  return filters?.priceMin !== undefined || filters?.priceMax !== undefined;
+}
+
 export function productMinListPriceSql(): Prisma.Sql {
   return Prisma.sql`
     COALESCE(

@@ -21,6 +21,20 @@ import type { AttributeFacet, CategoryTree, FacetBucket } from "@/types";
 const PRICE_RANGE_MIN = 0;
 const PRICE_RANGE_MAX = 5000;
 
+function parsePriceParam(raw: string | null, fallback: number): number {
+  if (!raw) {
+    return fallback;
+  }
+  const value = Number(raw);
+  return Number.isFinite(value)
+    ? clamp(value, PRICE_RANGE_MIN, PRICE_RANGE_MAX)
+    : fallback;
+}
+
+function clamp(value: number, lower: number, upper: number): number {
+  return Math.min(Math.max(value, lower), upper);
+}
+
 type ProductFiltersProps = {
   categoryTree: CategoryTree;
   categoryFacets: FacetBucket[];
@@ -45,7 +59,8 @@ export function ProductFilters({
       resetPaginationPosition(params);
       startTransition(() => {
         const qs = params.toString();
-        router.push(qs ? `/products?${qs}` : "/products", { scroll: false });
+        const path = qs ? `/products?${qs}` : "/products";
+        router.replace(path, { scroll: false });
       });
     },
     [router],
@@ -112,27 +127,44 @@ export function ProductFilters({
     [pushSearchParams, searchParams],
   );
 
-  const priceMin = Number(
-    searchParams.get("priceMin") ?? String(PRICE_RANGE_MIN),
+  const priceMin = parsePriceParam(
+    searchParams.get("priceMin"),
+    PRICE_RANGE_MIN,
   );
-  const priceMax = Number(
-    searchParams.get("priceMax") ?? String(PRICE_RANGE_MAX),
+  const priceMax = parsePriceParam(
+    searchParams.get("priceMax"),
+    PRICE_RANGE_MAX,
   );
 
   const updatePriceRange = useCallback(
     (nextMin: number, nextMax: number) => {
-      const params = new URLSearchParams(searchParams.toString());
-
-      if (nextMin <= PRICE_RANGE_MIN) {
-        params.delete("priceMin");
-      } else {
-        params.set("priceMin", String(nextMin));
+      let min = nextMin;
+      let max = nextMax;
+      if (min > max) {
+        [min, max] = [max, min];
       }
 
-      if (nextMax >= PRICE_RANGE_MAX) {
+      const params = new URLSearchParams(searchParams.toString());
+      const prevMin = params.get("priceMin");
+      const prevMax = params.get("priceMax");
+
+      const newMin = min <= PRICE_RANGE_MIN ? null : String(min);
+      const newMax = max >= PRICE_RANGE_MAX ? null : String(max);
+
+      if (newMin === prevMin && newMax === prevMax) {
+        return;
+      }
+
+      if (newMin === null) {
+        params.delete("priceMin");
+      } else {
+        params.set("priceMin", newMin);
+      }
+
+      if (newMax === null) {
         params.delete("priceMax");
       } else {
-        params.set("priceMax", String(nextMax));
+        params.set("priceMax", newMax);
       }
 
       pushSearchParams(params);
