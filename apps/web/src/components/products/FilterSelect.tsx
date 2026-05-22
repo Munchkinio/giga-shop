@@ -13,6 +13,8 @@ type FilterSelectProps = {
   onChange: (value: string) => void;
   placeholder: string;
   disabled?: boolean;
+  /** Tight layout for short values (e.g. page size). */
+  compact?: boolean;
   "aria-label": string;
 };
 
@@ -22,6 +24,7 @@ export function FilterSelect({
   onChange,
   placeholder,
   disabled = false,
+  compact = false,
   "aria-label": ariaLabel,
 }: FilterSelectProps) {
   const listboxId = useId();
@@ -60,7 +63,10 @@ export function FilterSelect({
   }
 
   return (
-    <div ref={containerRef} className="relative">
+    <div
+      ref={containerRef}
+      className={compact ? "relative inline-block" : "relative"}
+    >
       <button
         type="button"
         disabled={disabled}
@@ -69,14 +75,16 @@ export function FilterSelect({
         aria-controls={listboxId}
         aria-label={ariaLabel}
         onClick={() => setOpen((prev) => !prev)}
-        className={`select-field flex w-full items-center justify-between text-left disabled:cursor-not-allowed disabled:opacity-60 ${
-          open ? "border-brand-400 ring-2 ring-brand-200/80" : ""
-        }`}
+        className={`select-field items-center text-left disabled:cursor-not-allowed disabled:opacity-60 ${
+          compact
+            ? "inline-flex gap-1.5 px-3 py-2 tabular-nums"
+            : "flex w-full justify-between"
+        } ${open ? "border-brand-400 ring-2 ring-brand-200/80" : ""}`}
       >
         <span className={isPlaceholder ? "text-ink-500" : "text-ink-900"}>
           {displayLabel}
         </span>
-        <span className="text-ink-400" aria-hidden>
+        <span className="shrink-0 text-ink-400" aria-hidden>
           {open ? "▴" : "▾"}
         </span>
       </button>

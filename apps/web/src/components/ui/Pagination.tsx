@@ -3,6 +3,7 @@
 import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
 import { useTransition } from "react";
+import { FilterSelect } from "@/components/products/FilterSelect";
 import { getPaginationMode } from "@/lib/pagination-mode";
 import { buildProductsUrl } from "@/lib/search-params-url";
 import type { SearchRequest, SearchResult } from "@/types";
@@ -49,27 +50,28 @@ function PageSizeSelector() {
 
     startTransition(() => {
       const qs = params.toString();
-      router.push(qs ? `/products?${qs}` : "/products");
+      router.replace(qs ? `/products?${qs}` : "/products", { scroll: false });
     });
   }
 
+  const pageSizeOptions = PAGE_SIZE_OPTIONS.map((size) => ({
+    value: String(size),
+    label: String(size),
+  }));
+
   return (
-    <label className="flex items-center gap-2 text-sm text-ink-600">
-      <span className="font-medium">Per page</span>
-      <select
+    <div className="flex flex-col items-center gap-1.5 sm:flex-row sm:items-center sm:gap-3">
+      <span className="filter-label">Per page</span>
+      <FilterSelect
+        compact
+        options={pageSizeOptions}
         value={String(pageSize)}
-        onChange={(event) => handlePageSizeChange(event.target.value)}
+        onChange={handlePageSizeChange}
+        placeholder="24"
         disabled={isPending}
         aria-label="Products per page"
-        className="select-field w-auto py-1.5 disabled:opacity-60"
-      >
-        {PAGE_SIZE_OPTIONS.map((size) => (
-          <option key={size} value={size}>
-            {size}
-          </option>
-        ))}
-      </select>
-    </label>
+      />
+    </div>
   );
 }
 
