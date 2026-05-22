@@ -612,7 +612,7 @@ Offer UUIDs are on the product detail response (`offers[].id`). PDP stock text u
 | `q`                      | Search query                                                                  |
 | `categoryId`             | UUID or comma-separated UUIDs                                                 |
 | `brandId`                | UUID or comma-separated (OR within brands)                                    |
-| `priceMin`, `priceMax`   | Price bounds                                                                  |
+| `priceMin`, `priceMax`   | List price bounds (min in-stock offer, else `base_price`)                     |
 | `ratingMin`              | Minimum average rating                                                        |
 | `attributes`             | JSON object, e.g. `{"color":["red","blue"],"size":"M"}`                       |
 | `sortField`, `sortOrder` | `popularityScore`, `ratingAvg`, `basePrice`, `createdAt`, `name`, `relevance` |

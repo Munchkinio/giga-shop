@@ -125,11 +125,12 @@ export function buildProductWhere(filters?: Filters): Prisma.ProductWhereInput {
       : filters.brandId;
   }
 
-  if (filters.priceMin !== undefined || filters.priceMax !== undefined) {
-    where.basePrice = {
-      ...(filters.priceMin !== undefined ? { gte: filters.priceMin } : {}),
-      ...(filters.priceMax !== undefined ? { lte: filters.priceMax } : {}),
-    };
+  const listPriceWhere = buildListPriceWhere(
+    filters.priceMin,
+    filters.priceMax,
+  );
+  if (listPriceWhere) {
+    where.AND = [...toAndArray(where.AND), listPriceWhere];
   }
 
   if (filters.ratingMin !== undefined) {
@@ -171,7 +172,7 @@ export function resolveSort(
 }
 
 /**
- * List/sort price: lowest in-stock offer, or `base_price` when no offers in stock.
+ * List/sort/filter price: lowest in-stock offer, or `base_price` when no offers in stock.
  */
 export function productMinListPriceSql(): Prisma.Sql {
   return Prisma.sql`
@@ -185,6 +186,78 @@ export function productMinListPriceSql(): Prisma.Sql {
       ),
       p.base_price
     )`;
+}
+
+/**
+ * Prisma `where` for list-price bounds (same semantics as {@link productMinListPriceSql}).
+ */
+export function buildListPriceWhere(
+  priceMin?: number,
+  priceMax?: number,
+): Prisma.ProductWhereInput | undefined {
+  if (priceMin === undefined && priceMax === undefined) {
+    return undefined;
+  }
+
+  const clauses: Prisma.ProductWhereInput[] = [];
+
+  if (priceMin !== undefined) {
+    clauses.push({
+      OR: [
+        {
+          AND: [
+            { offers: { some: inStockOfferWhere } },
+            {
+              NOT: {
+                offers: {
+                  some: {
+                    ...inStockOfferWhere,
+                    price: { lt: priceMin },
+                  },
+                },
+              },
+            },
+          ],
+        },
+        {
+          AND: [
+            { offers: { none: inStockOfferWhere } },
+            { basePrice: { gte: priceMin } },
+          ],
+        },
+      ],
+    });
+  }
+
+  if (priceMax !== undefined) {
+    clauses.push({
+      OR: [
+        {
+          AND: [
+            { offers: { some: inStockOfferWhere } },
+            {
+              NOT: {
+                offers: {
+                  some: {
+                    ...inStockOfferWhere,
+                    price: { gt: priceMax },
+                  },
+                },
+              },
+            },
+          ],
+        },
+        {
+          AND: [
+            { offers: { none: inStockOfferWhere } },
+            { basePrice: { lte: priceMax } },
+          ],
+        },
+      ],
+    });
+  }
+
+  return clauses.length === 1 ? clauses[0] : { AND: clauses };
 }
 
 /** ORDER BY clause for raw catalog queries (`p` = products). */
@@ -311,10 +384,14 @@ export function buildProductFilterSql(
   }
 
   if (filters.priceMin !== undefined) {
-    parts.push(Prisma.sql`p.base_price >= ${filters.priceMin}`);
+    parts.push(
+      Prisma.sql`${productMinListPriceSql()} >= ${filters.priceMin}`,
+    );
   }
   if (filters.priceMax !== undefined) {
-    parts.push(Prisma.sql`p.base_price <= ${filters.priceMax}`);
+    parts.push(
+      Prisma.sql`${productMinListPriceSql()} <= ${filters.priceMax}`,
+    );
   }
   if (filters.ratingMin !== undefined) {
     parts.push(Prisma.sql`p.rating_avg >= ${filters.ratingMin}`);
