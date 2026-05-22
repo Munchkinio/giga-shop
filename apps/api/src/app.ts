@@ -11,6 +11,7 @@ import redisPlugin from "@/plugins/redis.js";
 import { requestIdOptions } from "@/plugins/request-id.js";
 import swaggerPlugin from "@/plugins/swagger.js";
 import { brandRoutes } from "@/routes/brands.js";
+import { offerRoutes } from "@/routes/offers.js";
 import { categoryRoutes } from "@/routes/categories.js";
 import { productRoutes } from "@/routes/products.js";
 import { savedSearchRoutes } from "@/routes/saved-searches.js";
@@ -74,6 +75,7 @@ export async function buildApp() {
 
   await app.register(rateLimitPlugin);
 
+  await app.register(offerRoutes);
   await app.register(productRoutes);
   await app.register(searchRoutes);
   await app.register(searchSuggestRoutes);

@@ -61,6 +61,9 @@ export type {
   SavedSearch,
 } from "./saved-search.js";
 
+export { updateOfferSchema } from "./offer.js";
+export type { UpdateOfferInput } from "./offer.js";
+
 export { searchSuggestQuerySchema } from "./search-suggest.js";
 export type {
   SearchSuggestQuery,

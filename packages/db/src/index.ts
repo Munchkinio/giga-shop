@@ -20,6 +20,13 @@ export {
   SavedSearchLimitError,
 } from "./queries/saved-searches.js";
 export {
+  updateProductOffer,
+} from "./queries/offers.js";
+export type {
+  ProductOfferRow,
+  UpdateProductOfferResult,
+} from "./queries/offers.js";
+export {
   getProductBySlug,
   getProducts,
   searchProducts,

@@ -1,6 +1,7 @@
 import {
   createSavedSearchSchema,
   searchSuggestQuerySchema,
+  updateOfferSchema,
 } from "@ecommerce/shared-types";
 import type { FastifyInstance } from "fastify";
 import { z } from "zod";
@@ -13,6 +14,7 @@ import {
   categoryTreeSchema,
   facetBucketSchema,
   productDetailSchema,
+  productOfferSchema,
   savedSearchResponseSchema,
   searchFacetsSchema,
 } from "@/openapi/entity-schemas.js";
@@ -210,6 +212,8 @@ export function registerOpenApiSchemas(app: FastifyInstance): void {
   });
 
   registerZodSchema(app, "ProductDetail", productDetailSchema);
+  registerZodSchema(app, "ProductOffer", productOfferSchema);
+  registerZodSchema(app, "UpdateOfferBody", updateOfferSchema);
   registerZodSchema(app, "Category", categoryResponseSchema);
   registerZodSchema(app, "CategoryTree", categoryTreeSchema);
   registerZodSchema(app, "BrandSummary", brandSummaryResponseSchema);

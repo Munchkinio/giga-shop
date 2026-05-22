@@ -260,6 +260,26 @@ export const createSavedSearchSchema: FastifySchema = {
   },
 };
 
+export const patchOfferSchema: FastifySchema = {
+  tags: ["Offers"],
+  summary: "Update offer price or stock",
+  description:
+    "Persists changes to product_offers and invalidates Redis (catalog version bump + product slug cache).",
+  params: idParam,
+  body: { $ref: "UpdateOfferBody#" },
+  response: {
+    200: {
+      description: "Updated offer",
+      content: {
+        "application/json": {
+          schema: { $ref: "ProductOffer#" },
+        },
+      },
+    },
+    ...apiErrorResponses,
+  },
+};
+
 export const deleteSavedSearchSchema: FastifySchema = {
   tags: ["Saved searches"],
   summary: "Delete a saved search",

@@ -27,6 +27,10 @@ const swaggerPlugin: FastifyPluginAsync = async (app) => {
       tags: [
         { name: "Health", description: "Probes (not rate-limited)" },
         { name: "Products", description: "Catalog listing and detail" },
+        {
+          name: "Offers",
+          description: "Seller offers (price, stock); PATCH invalidates cache",
+        },
         { name: "Search", description: "FTS search and autocomplete" },
         { name: "Categories", description: "Category tree" },
         { name: "Brands", description: "Brands" },

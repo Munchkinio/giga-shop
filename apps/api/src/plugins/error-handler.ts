@@ -53,6 +53,16 @@ const errorHandlerPlugin: FastifyPluginAsync = async (app) => {
     }
 
     const statusCode = getErrorStatusCode(error);
+    if (statusCode === 400) {
+      return reply.status(400).send(
+        errorBody(
+          "BAD_REQUEST",
+          error instanceof Error ? error.message : "Bad request",
+          requestId,
+        ),
+      );
+    }
+
     if (statusCode === 429) {
       return reply.status(429).send(
         errorBody(
