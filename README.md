@@ -317,6 +317,8 @@ Copy from [`.env.example`](./.env.example):
 | `PORT` | `3001` | HTTP port |
 | `HOST` | `0.0.0.0` | Bind address |
 | `CORS_ORIGIN` | `*` | Comma-separated origins; default `*` works for demo |
+| `RATE_LIMIT_MAX` | `100` | Max requests per IP per window |
+| `RATE_LIMIT_WINDOW_MS` | `60000` | Rate limit window (ms); `/health` is excluded |
 | `UPSTASH_REDIS_REST_URL` / `UPSTASH_REDIS_REST_TOKEN` | — | **Recommended in production**; API logs a warning and skips cache if unset |
 
 ### Web `apps/web`
@@ -628,6 +630,8 @@ End-to-end checklist:
 | `CORS_ORIGIN` | `https://giga-shop-web.vercel.app` (or `*` for demo) |
 | `UPSTASH_REDIS_REST_URL` | From Upstash **REST API** tab |
 | `UPSTASH_REDIS_REST_TOKEN` | Pair with URL |
+| `RATE_LIMIT_MAX` | Optional; default `100` |
+| `RATE_LIMIT_WINDOW_MS` | Optional; default `60000` |
 
 Migrations are **not** run by the container. Apply once locally or via Render shell:
 

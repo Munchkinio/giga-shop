@@ -15,6 +15,8 @@ const envSchema = z.object({
     .enum(["development", "production", "test"])
     .default("development"),
   CORS_ORIGIN: z.string().default("*"),
+  RATE_LIMIT_MAX: z.coerce.number().int().positive().default(100),
+  RATE_LIMIT_WINDOW_MS: z.coerce.number().int().positive().default(60_000),
   UPSTASH_REDIS_REST_URL: z.string().url().optional(),
   UPSTASH_REDIS_REST_TOKEN: z.string().min(1).optional(),
 });

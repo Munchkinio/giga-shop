@@ -2,6 +2,7 @@ import cors from "@fastify/cors";
 import Fastify from "fastify";
 import { env } from "@/env.js";
 import errorHandlerPlugin from "@/plugins/error-handler.js";
+import rateLimitPlugin from "@/plugins/rate-limit.js";
 import redisPlugin from "@/plugins/redis.js";
 import { brandRoutes } from "@/routes/brands.js";
 import { categoryRoutes } from "@/routes/categories.js";
@@ -31,6 +32,8 @@ export async function buildApp() {
     status: "ok",
     timestamp: new Date().toISOString(),
   }));
+
+  await app.register(rateLimitPlugin);
 
   await app.register(productRoutes);
   await app.register(searchRoutes);
