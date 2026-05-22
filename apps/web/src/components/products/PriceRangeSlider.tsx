@@ -64,11 +64,28 @@ export function PriceRangeSlider({
   }, [localMin, localMax]);
 
   useEffect(() => {
+    // Wait until drag ends; avoid SSR navigations on every debounce tick while dragging.
+    if (dragging) {
+      return;
+    }
     if (debouncedMin === valueMin && debouncedMax === valueMax) {
       return;
     }
+    // Local state already matches URL (props) but debounce is still catching up — do not
+    // push stale debounced values or router.push will clear the filter and loop refreshes.
+    if (localMin === valueMin && localMax === valueMax) {
+      return;
+    }
     onChangeRef.current(debouncedMin, debouncedMax);
-  }, [debouncedMin, debouncedMax, valueMin, valueMax]);
+  }, [
+    debouncedMin,
+    debouncedMax,
+    valueMin,
+    valueMax,
+    localMin,
+    localMax,
+    dragging,
+  ]);
 
   const span = max - min;
   const minPercent = span > 0 ? ((localMin - min) / span) * 100 : 0;
