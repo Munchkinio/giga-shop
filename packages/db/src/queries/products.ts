@@ -4,9 +4,9 @@ import type {
   SearchResult,
   SortOptions,
 } from "@ecommerce/shared-types";
-import { prisma } from "../client";
-import { getCategoryDescendantIds } from "./categories";
-import { getCatalogFacets, type CatalogFacetsResult } from "./facets";
+import { prisma } from "../client.js";
+import { getCategoryDescendantIds } from "./categories.js";
+import { getCatalogFacets, type CatalogFacetsResult } from "./facets.js";
 import {
   buildProductFilterSql,
   buildProductListOrderSql,
@@ -16,7 +16,7 @@ import {
   productSearchMatchSql,
   resolveSort,
   toPrismaOrderBy,
-} from "./helpers";
+} from "./helpers.js";
 
 function hasCategoryFilter(request: SearchRequest): boolean {
   return request.filters?.categoryId !== undefined;

@@ -1,5 +1,5 @@
 import { z } from "zod";
-import { filtersSchema, sortOptionsSchema } from "./search";
+import { filtersSchema, sortOptionsSchema } from "./search.js";
 
 export const sessionIdSchema = z.string().uuid();
 

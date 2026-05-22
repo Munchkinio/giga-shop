@@ -3,8 +3,8 @@ import type {
   ProductImage as PrismaProductImage,
   ProductOffer as PrismaProductOffer,
 } from "@prisma/client";
-import type { BrandSummary } from "./brand";
-import type { CategorySummary } from "./category";
+import type { BrandSummary } from "./brand.js";
+import type { CategorySummary } from "./category.js";
 
 /** JSONB `attributes` on `Product` (flexible facets). */
 export type ProductAttributes = Record<string, string | number | boolean>;

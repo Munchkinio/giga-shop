@@ -1,6 +1,6 @@
 import { z } from "zod";
-import { paginationSchema } from "./pagination";
-import type { ProductListItem } from "./product";
+import { paginationSchema } from "./pagination.js";
+import type { ProductListItem } from "./product.js";
 
 const uuidSchema = z.string().uuid();
 

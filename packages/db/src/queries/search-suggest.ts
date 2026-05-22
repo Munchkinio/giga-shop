@@ -1,5 +1,5 @@
 import type { SearchSuggestion } from "@ecommerce/shared-types";
-import { prisma } from "../client";
+import { prisma } from "../client.js";
 
 const MIN_QUERY_LENGTH = 2;
 

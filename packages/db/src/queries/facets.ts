@@ -1,11 +1,11 @@
 import { Prisma } from "@prisma/client";
 import type { AttributeFacet, FacetBucket, Filters } from "@ecommerce/shared-types";
-import { prisma } from "../client";
+import { prisma } from "../client.js";
 import {
   buildProductFilterSql,
   productSearchMatchSql,
   type ProductFilterSqlOptions,
-} from "./helpers";
+} from "./helpers.js";
 
 const MAX_ATTRIBUTE_FACET_VALUES = 50;
 

@@ -1,11 +1,11 @@
-export type { Brand, BrandSummary } from "./brand";
+export type { Brand, BrandSummary } from "./brand.js";
 
 export type {
   Category,
   CategorySummary,
   CategoryTree,
   CategoryWithChildren,
-} from "./category";
+} from "./category.js";
 
 export type {
   Product,
@@ -16,18 +16,18 @@ export type {
   ProductOffer,
   ProductWithImages,
   ProductWithOffers,
-} from "./product";
+} from "./product.js";
 
 export {
   cursorPaginationSchema,
   offsetPaginationSchema,
   paginationSchema,
-} from "./pagination";
+} from "./pagination.js";
 export type {
   CursorPagination,
   OffsetPagination,
   Pagination,
-} from "./pagination";
+} from "./pagination.js";
 
 export {
   filtersSchema,
@@ -37,7 +37,7 @@ export {
   sortFieldSchema,
   sortOptionsSchema,
   sortOrderSchema,
-} from "./search";
+} from "./search.js";
 export type {
   AttributeFacet,
   AttributeFacetValue,
@@ -50,21 +50,21 @@ export type {
   SortField,
   SortOptions,
   SortOrder,
-} from "./search";
+} from "./search.js";
 
 export {
   createSavedSearchSchema,
   sessionIdSchema,
-} from "./saved-search";
+} from "./saved-search.js";
 export type {
   CreateSavedSearchInput,
   SavedSearch,
-} from "./saved-search";
+} from "./saved-search.js";
 
-export { searchSuggestQuerySchema } from "./search-suggest";
+export { searchSuggestQuerySchema } from "./search-suggest.js";
 export type {
   SearchSuggestQuery,
   SearchSuggestResponse,
   SearchSuggestion,
   SearchSuggestionType,
-} from "./search-suggest";
+} from "./search-suggest.js";

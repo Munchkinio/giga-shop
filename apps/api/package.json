@@ -5,7 +5,7 @@
   "type": "module",
   "scripts": {
     "dev": "tsx watch src/index.ts",
-    "build": "tsc",
+    "build": "tsc && tsc-alias",
     "start": "node dist/index.js",
     "lint": "tsc --noEmit"
   },
@@ -21,6 +21,7 @@
   },
   "devDependencies": {
     "@types/node": "^22.15.21",
+    "tsc-alias": "^1.8.10",
     "tsx": "^4.19.4",
     "typescript": "^5.8.3"
   }

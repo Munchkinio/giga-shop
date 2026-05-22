@@ -5,7 +5,7 @@ import type {
   CategoryTree,
   CategoryWithChildren,
 } from "@ecommerce/shared-types";
-import { prisma } from "../client";
+import { prisma } from "../client.js";
 
 const categorySelect = {
   id: true,

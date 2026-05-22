@@ -9,7 +9,7 @@ import {
   filtersSchema,
   sortOptionsSchema,
 } from "@ecommerce/shared-types";
-import { prisma } from "../client";
+import { prisma } from "../client.js";
 
 const MAX_SAVED_SEARCHES_PER_SESSION = 20;
 
