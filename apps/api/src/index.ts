@@ -7,6 +7,11 @@ async function start(): Promise<void> {
   try {
     await app.listen({ port: env.PORT, host: env.HOST });
     app.log.info(`API listening on http://${env.HOST}:${env.PORT}`);
+    if (env.OPENAPI_ENABLED) {
+      app.log.info(
+        `OpenAPI docs: http://localhost:${String(env.PORT)}/docs`,
+      );
+    }
   } catch (error) {
     app.log.error(error);
     process.exit(1);

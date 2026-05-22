@@ -338,6 +338,8 @@ Copy from `[.env.example](./.env.example)`:
 | `CORS_ORIGIN`                                         | `*`       | Comma-separated origins; default `*` works for demo                        |
 | `RATE_LIMIT_MAX`                                      | `100`     | Max requests per IP per window — [API rate limiting](#api-rate-limiting)   |
 | `RATE_LIMIT_WINDOW_MS`                                | `60000`   | Window (ms); `/health` excluded — same section                             |
+| `OPENAPI_ENABLED`                                     | `true`    | Swagger UI at `/docs`; set `false` to disable                              |
+| `API_PUBLIC_URL`                                      | —         | Base URL in OpenAPI **Servers** (e.g. Render API URL)                      |
 | `UPSTASH_REDIS_REST_URL` / `UPSTASH_REDIS_REST_TOKEN` | —         | **Recommended in production**; API logs a warning and skips cache if unset |
 
 
@@ -529,6 +531,19 @@ pnpm --filter @ecommerce/api start
 
 Base URL: `http://localhost:3001` (local).
 
+### Interactive docs (OpenAPI / Swagger)
+
+When `OPENAPI_ENABLED=true` (default), the API serves:
+
+| URL | Description |
+| --- | ----------- |
+| [http://localhost:3001/docs](http://localhost:3001/docs) | Swagger UI — try endpoints in the browser |
+| [http://localhost:3001/docs/json](http://localhost:3001/docs/json) | OpenAPI 3.0 JSON spec |
+
+Set `API_PUBLIC_URL` (e.g. `https://giga-shop-api.onrender.com`) so the **Servers** dropdown in Swagger matches production. `/docs` is registered before rate limiting (same as `/health`).
+
+Disable docs: `OPENAPI_ENABLED=false`.
+
 ### Health
 
 
@@ -719,6 +734,8 @@ End-to-end checklist:
 | `UPSTASH_REDIS_REST_TOKEN` | Pair with URL                                        |
 | `RATE_LIMIT_MAX`           | Optional; default `100`                              |
 | `RATE_LIMIT_WINDOW_MS`     | Optional; default `60000`                            |
+| `API_PUBLIC_URL`           | `https://giga-shop-api.onrender.com` (Swagger Servers) |
+| `OPENAPI_ENABLED`          | `true` (docs at `/docs`; set `false` to hide)        |
 
 
 Migrations are **not** run by the container. Apply once locally or via Render shell:
