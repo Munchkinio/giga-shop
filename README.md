@@ -11,7 +11,8 @@ For day-to-day coding conventions and performance rules, see **[ARCHITECTURE.md]
 | -------------- | -------------------------------------------------------------------------------------- |
 | **Storefront** | [https://giga-shop-web.vercel.app](https://giga-shop-web.vercel.app)                   |
 | **API**        | [https://giga-shop-api.onrender.com](https://giga-shop-api.onrender.com)               |
-| **API health** | [https://giga-shop-api.onrender.com/health](https://giga-shop-api.onrender.com/health) |
+| **API health** | [https://giga-shop-api.onrender.com/health](https://giga-shop-api.onrender.com/health) (liveness) |
+| **API ready** | [https://giga-shop-api.onrender.com/health/ready](https://giga-shop-api.onrender.com/health/ready) (readiness) |
 | **API docs**   | [https://giga-shop-api.onrender.com/docs](https://giga-shop-api.onrender.com/docs) (Swagger UI) |
 
 
@@ -344,6 +345,7 @@ Copy from `[.env.example](./.env.example)`:
 | `RATE_LIMIT_WINDOW_MS`                                | `60000`   | Window (ms); `/health` excluded — same section                             |
 | `OPENAPI_ENABLED`                                     | `true`    | Swagger UI at `/docs`; set `false` to disable                              |
 | `API_PUBLIC_URL`                                      | —         | Base URL in OpenAPI **Servers** (e.g. Render API URL)                      |
+| `HEALTH_READY_REQUIRE_REDIS`                          | `false`   | When `true`, `/health/ready` fails if Upstash is down or unset             |
 | `UPSTASH_REDIS_REST_URL` / `UPSTASH_REDIS_REST_TOKEN` | —         | **Recommended in production**; API logs a warning and skips cache if unset |
 
 
@@ -565,9 +567,14 @@ When `OPENAPI_ENABLED=true` (default), the API serves interactive documentation:
 ### Health
 
 
-| Method | Path      | Description             |
-| ------ | --------- | ----------------------- |
-| `GET`  | `/health` | `{ status, timestamp }` — not rate-limited ([details](#api-rate-limiting)) |
+| Method | Path            | Description             |
+| ------ | --------------- | ----------------------- |
+| `GET`  | `/health`       | **Liveness** — process is up; does not check DB/Redis |
+| `GET`  | `/health/ready` | **Readiness** — `SELECT 1` on Postgres; optional Upstash `PING` — **503** if DB down |
+
+Both paths are not rate-limited ([details](#api-rate-limiting)). Render can keep **Health Check Path** `/health`; use `/health/ready` when you need deploy gates on database connectivity.
+
+**Request ID:** every response includes `X-Request-Id` (reuse client header or generated UUID). Error JSON includes `error.requestId`; logs use field `reqId`.
 
 
 ### Products & search
@@ -737,7 +744,7 @@ End-to-end checklist:
 | **Dockerfile Path**      | `apps/api/Dockerfile`       |
 | **Docker Build Context** | `.`                         |
 | **Docker Command**       | *(empty — use image `CMD`)* |
-| **Health Check Path**    | `/health`                   |
+| **Health Check Path**    | `/health` (liveness) or `/health/ready` (readiness + DB) |
 
 
 **Environment variables:**
@@ -752,6 +759,7 @@ End-to-end checklist:
 | `UPSTASH_REDIS_REST_TOKEN` | Pair with URL                                        |
 | `RATE_LIMIT_MAX`           | Optional; default `100`                              |
 | `RATE_LIMIT_WINDOW_MS`     | Optional; default `60000`                            |
+| `HEALTH_READY_REQUIRE_REDIS` | Optional; default `false`                        |
 | `API_PUBLIC_URL`           | `https://giga-shop-api.onrender.com` (Swagger Servers) |
 | `OPENAPI_ENABLED`          | `true` (docs at `/docs`; set `false` to hide)        |
 

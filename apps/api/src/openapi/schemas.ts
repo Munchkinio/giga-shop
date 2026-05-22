@@ -117,6 +117,7 @@ export function registerOpenApiSchemas(app: FastifyInstance): void {
         properties: {
           code: { type: "string" },
           message: { type: "string" },
+          requestId: { type: "string", description: "Echo of X-Request-Id" },
           details: { type: "object", additionalProperties: true },
         },
       },
@@ -130,6 +131,34 @@ export function registerOpenApiSchemas(app: FastifyInstance): void {
     properties: {
       status: { type: "string", enum: ["ok"] },
       timestamp: { type: "string", format: "date-time" },
+    },
+  });
+
+  app.addSchema({
+    $id: "HealthCheckResult",
+    type: "object",
+    required: ["status"],
+    properties: {
+      status: { type: "string", enum: ["ok", "error", "skipped"] },
+      message: { type: "string" },
+    },
+  });
+
+  app.addSchema({
+    $id: "HealthReadyResponse",
+    type: "object",
+    required: ["status", "timestamp", "checks"],
+    properties: {
+      status: { type: "string", enum: ["ok", "fail"] },
+      timestamp: { type: "string", format: "date-time" },
+      checks: {
+        type: "object",
+        required: ["database", "redis"],
+        properties: {
+          database: { $ref: "HealthCheckResult#" },
+          redis: { $ref: "HealthCheckResult#" },
+        },
+      },
     },
   });
 

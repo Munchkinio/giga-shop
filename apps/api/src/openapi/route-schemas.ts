@@ -45,6 +45,31 @@ export const healthSchema: FastifySchema = {
   },
 };
 
+export const healthReadySchema: FastifySchema = {
+  tags: ["Health"],
+  summary: "Readiness probe",
+  description:
+    "Checks PostgreSQL (required) and Upstash Redis (optional unless HEALTH_READY_REQUIRE_REDIS=true). Not rate-limited.",
+  response: {
+    200: {
+      description: "Dependencies healthy",
+      content: {
+        "application/json": {
+          schema: { $ref: "HealthReadyResponse#" },
+        },
+      },
+    },
+    503: {
+      description: "One or more required checks failed",
+      content: {
+        "application/json": {
+          schema: { $ref: "HealthReadyResponse#" },
+        },
+      },
+    },
+  },
+};
+
 export const listProductsSchema: FastifySchema = {
   tags: ["Products"],
   summary: "List and filter products",
