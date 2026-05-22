@@ -7,7 +7,9 @@ import { seedCategories } from "./seed/categories.seed";
 import { seedProducts } from "./seed/products.seed";
 
 const seedDir = path.dirname(fileURLToPath(import.meta.url));
+// Same order as prisma.config.ts: optional packages/db/.env, then root .env wins.
 config({ path: path.join(seedDir, "..", ".env") });
+config({ path: path.join(seedDir, "..", "..", "..", ".env"), override: true });
 
 const prisma = new PrismaClient();
 

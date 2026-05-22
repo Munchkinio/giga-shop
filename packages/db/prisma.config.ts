@@ -3,7 +3,9 @@ import path from "node:path";
 import { defineConfig } from "prisma/config";
 
 // Prisma 6+ does not auto-load .env when prisma.config.ts is present.
+// packages/db/.env first (optional local defaults); root .env wins (Supabase, shared DATABASE_URL).
 config({ path: path.join(__dirname, ".env") });
+config({ path: path.join(__dirname, "..", "..", ".env"), override: true });
 
 export default defineConfig({
   schema: path.join("prisma", "schema.prisma"),

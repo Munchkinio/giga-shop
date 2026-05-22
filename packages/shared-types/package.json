@@ -13,7 +13,7 @@
     }
   },
   "scripts": {
-    "build": "tsc",
+    "build": "pnpm --filter @ecommerce/db prisma:generate && tsc",
     "clean": "rimraf dist",
     "lint": "tsc --noEmit"
   },
