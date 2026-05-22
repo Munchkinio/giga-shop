@@ -352,7 +352,7 @@ Copy from `[.env.example](./.env.example)`:
 
 | Variable              | Default                 | Description                          |
 | --------------------- | ----------------------- | ------------------------------------ |
-| `NEXT_PUBLIC_API_URL` | `http://localhost:3001` | Fastify base URL (no trailing slash) |
+| `NEXT_PUBLIC_API_URL` | `http://localhost:3001` | Fastify base URL (no trailing slash); footer **API docs** links to `{URL}/docs` |
 
 
 ---

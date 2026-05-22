@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import { Outfit, Plus_Jakarta_Sans } from "next/font/google";
 import { SiteLogo } from "@/components/layout/SiteLogo";
+import { getApiDocsUrl } from "@/lib/api-docs-url";
 import { DEFAULT_SITE_DESCRIPTION } from "@/lib/seo";
 import "./globals.css";
 
@@ -53,6 +54,15 @@ export default function RootLayout({
             <p className="text-xs text-ink-500">
               Curated catalog · Search · Filters ·{" "}
               <span className="text-brand-600">Giga Shop</span>
+              {" · "}
+              <a
+                href={getApiDocsUrl()}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="font-medium text-brand-700 underline-offset-2 hover:underline"
+              >
+                API docs
+              </a>
             </p>
           </div>
         </footer>
