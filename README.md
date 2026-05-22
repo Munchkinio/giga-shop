@@ -18,6 +18,7 @@ For day-to-day coding conventions and performance rules, see **[ARCHITECTURE.md]
 - [Environment variables](#environment-variables)
 - [Database](#database)
 - [Running the apps](#running-the-apps)
+- [Building for production](#building-for-production)
 - [API reference](#api-reference)
 - [Storefront (web)](#storefront-web)
 - [Search & filters](#search--filters)
@@ -174,7 +175,7 @@ flowchart LR
 | **Cache** | Upstash Redis REST | Optional locally; **5 min** search cache, **2 min** suggest |
 | **Search** | `tsvector` (generated), `pg_trgm`, per-word Levenshtein | Raw SQL in `packages/db` |
 | **Validation** | Zod 3 | API query/body + shared request types |
-| **Deploy** | Vercel (web), Fly.io (API) | See [Deployment](#deployment) |
+| **Deploy** | Vercel (web), [Render](https://render.com) Docker (API) | See [Deployment](#deployment) |
 
 **PostgreSQL extensions** (via `docker/postgres/init.sql` + migrations)
 
@@ -190,6 +191,7 @@ flowchart LR
 ecommerce-catalog/
 ├── apps/
 │   ├── api/                    # Fastify REST API (:3001)
+│   │   ├── Dockerfile          # Production image (Render / Docker)
 │   │   └── src/
 │   │       ├── routes/         # HTTP routes
 │   │       ├── services/       # Business logic + Redis cache
@@ -208,7 +210,8 @@ ecommerce-catalog/
 │   │   │   ├── migrations/   # SQL (FTS, GIN indexes, …)
 │   │   │   └── seed/         # ~10K products, 200 brands, categories
 │   │   └── src/queries/      # products, facets, search-suggest, …
-│   └── shared-types/         # Zod + TS types (api + web)
+│   └── shared-types/         # Zod + TS types → dist/ (api + web)
+├── .dockerignore               # API image build context excludes
 ├── docker/
 │   └── postgres/init.sql
 ├── docker-compose.yml          # Postgres 16 + Redis 7
@@ -244,9 +247,11 @@ cp .env.example .env
 pnpm db:up
 
 # Wait until healthy, then database setup
-pnpm --filter @ecommerce/db prisma:generate
 pnpm --filter @ecommerce/db prisma:migrate
 pnpm --filter @ecommerce/db db:seed
+
+# Build workspace packages (API resolves @ecommerce/* from dist/)
+pnpm build --filter=@ecommerce/api...
 
 # Terminal 1 — API
 pnpm --filter @ecommerce/api dev
@@ -261,9 +266,10 @@ pnpm --filter @ecommerce/web dev
 
 Open **http://localhost:3000** (redirects to `/products`).
 
-Or run both via Turborepo:
+Or run both via Turborepo (build workspace packages once first if `dist/` is missing):
 
 ```bash
+pnpm build --filter=@ecommerce/api...
 pnpm dev
 ```
 
@@ -371,6 +377,35 @@ pnpm db:logs    # follow logs
 |---------|------|---------|
 | PostgreSQL | 5432 | `postgres` / `postgres`, DB `ecommerce` |
 | Redis | 6379 | no password |
+
+---
+
+## Building for production
+
+Workspace packages **`@ecommerce/shared-types`** and **`@ecommerce/db`** compile to **`dist/`** (Node ESM + declarations). The API imports them at runtime via `package.json` `exports` pointing to JavaScript, not TypeScript sources.
+
+| Package | Build | Notes |
+|---------|-------|--------|
+| `@ecommerce/shared-types` | `tsc` → `dist/` | Uses Prisma model types from `@prisma/client` |
+| `@ecommerce/db` | `prisma generate && tsc` | FTS queries in `src/queries/` |
+| `@ecommerce/api` | `tsc && tsc-alias` | Rewrites `@/*` path aliases in `dist/` |
+
+Turbo runs dependents first (`^build`). From the repo root:
+
+```bash
+pnpm build
+# or API chain only:
+pnpm build --filter=@ecommerce/api...
+```
+
+Production start (local, after build):
+
+```bash
+pnpm --filter @ecommerce/api start
+# → node apps/api/dist/index.js
+```
+
+**Prisma in CI/Docker:** `packages/db/prisma.config.ts` uses `process.env.DATABASE_URL ?? ""` so `prisma generate` succeeds without a live database (Docker image build). Migrations still require a real `DATABASE_URL` (`prisma:deploy`).
 
 ---
 
@@ -507,19 +542,70 @@ If Upstash env vars are missing, API runs **without cache** (still functional).
 
 | Component | Target | Notes |
 |-----------|--------|--------|
-| **Web** | [Vercel](https://vercel.com) | Set `NEXT_PUBLIC_API_URL` to production API |
-| **API** | [Fly.io](https://fly.io) | `DATABASE_URL`, Upstash, `CORS_ORIGIN` |
-| **Database** | [Supabase](https://supabase.com) | Postgres 15+, run Prisma migrations |
-| **Redis** | [Upstash](https://upstash.com) | REST API from Fly (not local `REDIS_URL`) |
+| **Web** | [Vercel](https://vercel.com) | `NEXT_PUBLIC_API_URL` → production API URL |
+| **API** | [Render](https://render.com) **Docker Web Service** | Image from `apps/api/Dockerfile` (also works on Fly.io, Railway, …) |
+| **Database** | [Supabase](https://supabase.com) | Postgres 15+; connection string as `DATABASE_URL` |
+| **Redis** | [Upstash](https://upstash.com) | REST vars on API (optional; cache off if unset) |
 | **CDN** | Cloudflare (optional) | Static assets / edge |
 
-Build:
+### Render (API)
+
+Create a **Web Service** → **Docker**:
+
+| Setting | Value |
+|---------|--------|
+| **Root directory** | Repository root (`.`) |
+| **Dockerfile path** | `apps/api/Dockerfile` |
+| **Health check path** | `/health` |
+| **Port** | `3001` (or set `PORT` env) |
+
+**Environment variables** (minimum):
+
+| Variable | Description |
+|----------|-------------|
+| `DATABASE_URL` | Supabase Postgres URL (SSL) |
+| `NODE_ENV` | `production` |
+| `CORS_ORIGIN` | Vercel web origin(s), comma-separated |
+| `UPSTASH_REDIS_REST_URL` / `UPSTASH_REDIS_REST_TOKEN` | Optional cache |
+
+**Pre-deploy / release command** (migrations):
 
 ```bash
-pnpm build
-pnpm --filter @ecommerce/api start
-pnpm --filter @ecommerce/web start
+pnpm --filter @ecommerce/db prisma:deploy
 ```
+
+Run against the same `DATABASE_URL` as the service (Render shell or one-off job). The Docker image does not run migrations on startup.
+
+### Docker API image (local smoke test)
+
+Build from the **repository root** (see `.dockerignore`):
+
+```bash
+docker build -t giga-shop-api -f apps/api/Dockerfile .
+```
+
+Run (Postgres on the host via Docker Desktop):
+
+```bash
+docker run --rm -p 3001:3001 \
+  -e DATABASE_URL="postgresql://postgres:postgres@host.docker.internal:5432/ecommerce" \
+  -e NODE_ENV=production \
+  giga-shop-api
+```
+
+Check **http://localhost:3001/health** → `{"status":"ok","timestamp":"..."}`.
+
+On Linux, add `--add-host=host.docker.internal:host-gateway` if the hostname is not resolved.
+
+The image uses a **multi-stage** build: `pnpm install` + `prisma generate` in `deps`, `pnpm build --filter=@ecommerce/api...` in `builder`, minimal Alpine runtime with `dumb-init` and `node apps/api/dist/index.js`.
+
+### Web (Vercel)
+
+```bash
+pnpm --filter @ecommerce/web build
+```
+
+Set `NEXT_PUBLIC_API_URL` to the Render API URL (e.g. `https://giga-shop-api.onrender.com`).
 
 ---
 
@@ -531,8 +617,8 @@ Designed for hobby / free tiers:
 |---------|-------|------------|
 | Supabase | ~500 MB DB | Lean schema, ~100K products max test data |
 | Upstash | ~10K commands/day | Aggressive caching, `includeFacets=false` on pagination-only requests |
-| Fly.io | 256 MB RAM | Small Node footprint, efficient queries |
-| Vercel | Serverless cold starts | Heavy reads on Fly API, not DB from edge |
+| Render (API) | Free tier sleeps / cold start | Health check `/health`; Docker image ~workspace deps |
+| Vercel | Serverless cold starts | Catalog reads hit Render API, not DB from edge |
 
 See **[ARCHITECTURE.md](./ARCHITECTURE.md)** for indexing, `select` usage, and N+1 avoidance.
 
@@ -554,8 +640,11 @@ See **[ARCHITECTURE.md](./ARCHITECTURE.md)** for indexing, `select` usage, and N
 ```bash
 pnpm --filter @ecommerce/api dev
 pnpm --filter @ecommerce/web dev
+pnpm build --filter=@ecommerce/api...   # workspace dist (required before API dev if dist/ missing)
 pnpm --filter @ecommerce/db prisma:migrate
+pnpm --filter @ecommerce/db prisma:deploy   # production migrations
 pnpm --filter @ecommerce/db db:seed
+docker build -t giga-shop-api -f apps/api/Dockerfile .   # API production image
 ```
 
 ---
