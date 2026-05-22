@@ -1,13 +1,24 @@
-# E-commerce Product Catalog
+# Giga Shop — E-commerce Product Catalog
 
-A full-stack product catalog for browsing, searching, and filtering ~10K+ products. Built as a **Turborepo monorepo** with a **Next.js 14** storefront, **Fastify** REST API, **PostgreSQL** (FTS + trigram search), and **Redis** caching.
+A full-stack product catalog for browsing, searching, and filtering ~10K+ products. Built as a **Turborepo monorepo** with a **Next.js 14** storefront, **Fastify** REST API, **PostgreSQL** (FTS + trigram search), and **Upstash Redis** caching.
 
 For day-to-day coding conventions and performance rules, see **[ARCHITECTURE.md](./ARCHITECTURE.md)**.
+
+### Production (live)
+
+| Service | URL |
+|---------|-----|
+| **Storefront** | https://giga-shop-web.vercel.app |
+| **API** | https://giga-shop-api.onrender.com |
+| **API health** | https://giga-shop-api.onrender.com/health |
+
+Stack: **Vercel** (web) · **Render** (API, Docker) · **Supabase** (Postgres) · **Upstash** (Redis cache).
 
 ---
 
 ## Table of contents
 
+- [Production (live)](#production-live)
 - [Features](#features)
 - [Architecture](#architecture)
 - [Scope: real-time price & inventory](#scope-real-time-price--inventory)
@@ -17,6 +28,7 @@ For day-to-day coding conventions and performance rules, see **[ARCHITECTURE.md]
 - [Quick start](#quick-start)
 - [Environment variables](#environment-variables)
 - [Database](#database)
+- [Supabase (cloud Postgres)](#supabase-cloud-postgres)
 - [Running the apps](#running-the-apps)
 - [Building for production](#building-for-production)
 - [API reference](#api-reference)
@@ -36,7 +48,8 @@ For day-to-day coding conventions and performance rules, see **[ARCHITECTURE.md]
 | **Catalog** | Product grid, detail pages, category tree, brands |
 | **Search** | PostgreSQL full-text search + fuzzy name fallback (`pg_trgm`, Levenshtein) |
 | **Autocomplete** | `GET /search/suggest` — products, brands, popular queries (debounced UI) |
-| **Filters** | Category, multi-brand (OR), price range, min rating, sort |
+| **Filters** | Category tree (branch scope), multi-brand (OR), price range, min rating, in-stock, sort by min offer price |
+| **Pricing** | Multi-seller offers; list/PDP show lowest in-stock offer price |
 | **Attributes** | JSONB facets (`color`, `size`, `material`, …) — shown **after category** is selected |
 | **Pagination** | **Pages** (offset) or **Infinite scroll** (cursor) — toggle via icon next to search |
 | **Quick view** | Side panel with product details without leaving the catalog |
@@ -198,6 +211,7 @@ ecommerce-catalog/
 │   │       ├── lib/            # parse-search-query, cache, session-id
 │   │       └── plugins/        # error-handler, redis
 │   └── web/                    # Next.js storefront (:3000)
+│       ├── vercel.json         # Monorepo install/build on Vercel
 │       └── src/
 │           ├── app/            # App Router pages
 │           ├── components/     # UI (products, search, ui)
@@ -226,7 +240,8 @@ ecommerce-catalog/
 
 - **Node.js** 20+ (see `.nvmrc`)
 - **pnpm** 9+ (`corepack enable pnpm`)
-- **Docker Desktop** (local Postgres + Redis)
+- **Docker Desktop** (local Postgres; optional — not used by API cache)
+- Accounts (production): [Supabase](https://supabase.com), [Render](https://render.com), [Vercel](https://vercel.com), [Upstash](https://upstash.com) (optional cache)
 
 ---
 
@@ -292,17 +307,17 @@ Copy from [`.env.example`](./.env.example):
 | `UPSTASH_REDIS_REST_TOKEN` | Upstash token (pair with URL) |
 | `NODE_ENV` | `development` \| `production` \| `test` |
 
-`packages/db` loads `packages/db/.env` or root `.env` via `prisma.config.ts` (Prisma 6).
+**Env file precedence (Prisma, seed):** optional `packages/db/.env` is loaded first; **root `.env` overrides** (`prisma.config.ts`, `prisma/seed.ts`). For Supabase deploy/seed, put `DATABASE_URL` in the **root** `.env` and keep `DATABASE_URL` **commented out** in `packages/db/.env` (otherwise localhost wins if set there).
 
-### API `apps/api` (also reads root `.env`)
+### API `apps/api` (reads root `.env` via `apps/api/src/env.ts`)
 
 | Variable | Default | Description |
 |----------|---------|-------------|
 | `DATABASE_URL` | — | Required |
 | `PORT` | `3001` | HTTP port |
 | `HOST` | `0.0.0.0` | Bind address |
-| `CORS_ORIGIN` | `*` | Comma-separated origins or `*` |
-| `UPSTASH_REDIS_REST_*` | — | Optional Redis cache |
+| `CORS_ORIGIN` | `*` | Comma-separated origins; default `*` works for demo |
+| `UPSTASH_REDIS_REST_URL` / `UPSTASH_REDIS_REST_TOKEN` | — | **Recommended in production**; API logs a warning and skips cache if unset |
 
 ### Web `apps/web`
 
@@ -335,9 +350,11 @@ Postgres-specific features (FTS column, GIN indexes on `search_vector`, `name` t
 
 ```bash
 pnpm --filter @ecommerce/db db:seed
-# Reseed from scratch:
-pnpm --filter @ecommerce/db exec tsx prisma/seed.ts -- --reset
+# Reseed from scratch (clears catalog tables first):
+pnpm --filter @ecommerce/db db:seed -- --reset
 ```
+
+Uses the same `DATABASE_URL` as migrations (root `.env` when `packages/db/.env` has no `DATABASE_URL`).
 
 Default seed (~configurable via `SEED_PRODUCT_COUNT`):
 
@@ -350,9 +367,40 @@ Default seed (~configurable via `SEED_PRODUCT_COUNT`):
 
 ```bash
 pnpm --filter @ecommerce/db prisma:studio   # GUI
-pnpm --filter @ecommerce/db prisma:migrate   # apply migrations
+pnpm --filter @ecommerce/db prisma:migrate   # dev: apply migrations
+pnpm --filter @ecommerce/db prisma:deploy    # production: apply migrations
 pnpm --filter @ecommerce/db prisma:reset     # reset DB (destructive)
 ```
+
+---
+
+## Supabase (cloud Postgres)
+
+Use when hosting the database on [Supabase](https://supabase.com) (not local Docker).
+
+1. Create a project (e.g. **Postgres** default, region near EU). **Data API** optional (this app uses Prisma, not `supabase-js`). **Eviction** on for cache-sized Redis is unrelated — for Upstash see [Caching](#caching).
+2. Copy **Session pooler** connection string (port **5432**) if **Direct** (`db.*.supabase.co`) is unreachable from your network (common `P1001` on Windows).
+3. Set in **root** `.env`:
+
+   ```env
+   DATABASE_URL="postgresql://postgres.[ref]:[PASSWORD]@....pooler.supabase.com:5432/postgres?sslmode=require"
+   ```
+
+4. Apply schema:
+
+   ```bash
+   pnpm --filter @ecommerce/db prisma:deploy
+   ```
+
+5. Seed (optional, ~10K products):
+
+   ```bash
+   pnpm --filter @ecommerce/db db:seed -- --reset
+   ```
+
+6. Confirm tables in Supabase **Table Editor** (`products`, `categories`, …).
+
+`packages/db/prisma.config.ts` uses `process.env.DATABASE_URL ?? ""` so `prisma generate` works in Docker/Vercel builds without a live DB.
 
 ---
 
@@ -376,7 +424,7 @@ pnpm db:logs    # follow logs
 | Service | Port | Default |
 |---------|------|---------|
 | PostgreSQL | 5432 | `postgres` / `postgres`, DB `ecommerce` |
-| Redis | 6379 | no password |
+| Redis | 6379 | Compose only; **API uses Upstash REST**, not this instance |
 
 ---
 
@@ -386,7 +434,7 @@ Workspace packages **`@ecommerce/shared-types`** and **`@ecommerce/db`** compile
 
 | Package | Build | Notes |
 |---------|-------|--------|
-| `@ecommerce/shared-types` | `tsc` → `dist/` | Uses Prisma model types from `@prisma/client` |
+| `@ecommerce/shared-types` | `prisma generate` (db) + `tsc` → `dist/` | Prisma types required before compile (Vercel runs via db filter) |
 | `@ecommerce/db` | `prisma generate && tsc` | FTS queries in `src/queries/` |
 | `@ecommerce/api` | `tsc && tsc-alias` | Rewrites `@/*` path aliases in `dist/` |
 
@@ -534,47 +582,60 @@ JSON shape from error plugin: `{ error: { code, message } }` (e.g. `400`, `404`,
 | `search:suggest:*` | 2 min | Autocomplete |
 | `product:slug:*` | 5 min | Product detail |
 
-If Upstash env vars are missing, API runs **without cache** (still functional).
+If Upstash env vars are missing, API runs **without cache** (every request hits Postgres; still functional).
+
+**Setup:** Upstash → **Create Database** → region near API → enable **eviction** (safe for TTL cache) → copy **REST URL** + **token** to Render (and root `.env` for local API).
 
 ---
 
 ## Deployment
 
+End-to-end checklist:
+
+| Step | Service | Action |
+|------|---------|--------|
+| 1 | **Supabase** | `prisma:deploy` + optional `db:seed -- --reset` (see [Supabase](#supabase-cloud-postgres)) |
+| 2 | **Upstash** | Create Redis → REST URL + token → Render env |
+| 3 | **Render** | Docker API from `apps/api/Dockerfile` |
+| 4 | **Vercel** | Root `apps/web`, `NEXT_PUBLIC_API_URL` → Render |
+
 | Component | Target | Notes |
 |-----------|--------|--------|
-| **Web** | [Vercel](https://vercel.com) | `NEXT_PUBLIC_API_URL` → production API URL |
-| **API** | [Render](https://render.com) **Docker Web Service** | Image from `apps/api/Dockerfile` (also works on Fly.io, Railway, …) |
-| **Database** | [Supabase](https://supabase.com) | Postgres 15+; connection string as `DATABASE_URL` |
-| **Redis** | [Upstash](https://upstash.com) | REST vars on API (optional; cache off if unset) |
+| **Web** | [Vercel](https://vercel.com) | `apps/web`; see `apps/web/vercel.json` |
+| **API** | [Render](https://render.com) **Docker** | Multi-stage image; also Fly.io / Railway compatible |
+| **Database** | [Supabase](https://supabase.com) | Session pooler URL recommended |
+| **Cache** | [Upstash](https://upstash.com) | REST on API; enable **eviction** on free tier |
 | **CDN** | Cloudflare (optional) | Static assets / edge |
 
 ### Render (API)
 
-Create a **Web Service** → **Docker**:
+**New Web Service** → connect GitHub repo → **Environment: Docker** (not Node).
 
 | Setting | Value |
 |---------|--------|
-| **Root directory** | Repository root (`.`) |
-| **Dockerfile path** | `apps/api/Dockerfile` |
-| **Health check path** | `/health` |
-| **Port** | `3001` (or set `PORT` env) |
+| **Root Directory** | *(empty — repository root)* |
+| **Dockerfile Path** | `apps/api/Dockerfile` |
+| **Docker Build Context** | `.` |
+| **Docker Command** | *(empty — use image `CMD`)* |
+| **Health Check Path** | `/health` |
 
-**Environment variables** (minimum):
+**Environment variables:**
 
 | Variable | Description |
 |----------|-------------|
-| `DATABASE_URL` | Supabase Postgres URL (SSL) |
+| `DATABASE_URL` | Supabase Session pooler URI + `sslmode=require` |
 | `NODE_ENV` | `production` |
-| `CORS_ORIGIN` | Vercel web origin(s), comma-separated |
-| `UPSTASH_REDIS_REST_URL` / `UPSTASH_REDIS_REST_TOKEN` | Optional cache |
+| `CORS_ORIGIN` | `https://giga-shop-web.vercel.app` (or `*` for demo) |
+| `UPSTASH_REDIS_REST_URL` | From Upstash **REST API** tab |
+| `UPSTASH_REDIS_REST_TOKEN` | Pair with URL |
 
-**Pre-deploy / release command** (migrations):
+Migrations are **not** run by the container. Apply once locally or via Render shell:
 
 ```bash
 pnpm --filter @ecommerce/db prisma:deploy
 ```
 
-Run against the same `DATABASE_URL` as the service (Render shell or one-off job). The Docker image does not run migrations on startup.
+Verify logs: no line `Upstash Redis not configured — caching disabled`.
 
 ### Docker API image (local smoke test)
 
@@ -597,15 +658,19 @@ Check **http://localhost:3001/health** → `{"status":"ok","timestamp":"..."}`.
 
 On Linux, add `--add-host=host.docker.internal:host-gateway` if the hostname is not resolved.
 
-The image uses a **multi-stage** build: `pnpm install` + `prisma generate` in `deps`, `pnpm build --filter=@ecommerce/api...` in `builder`, minimal Alpine runtime with `dumb-init` and `node apps/api/dist/index.js`.
+**Image build (summary):** `deps` → `pnpm install` + `prisma generate`; `builder` → `pnpm build --filter=@ecommerce/api...`; `runtime` → Alpine + `dumb-init`, compiled `dist/`, workspace `node_modules` (including `packages/shared-types/node_modules` for `zod`). Build from repo root; see [`.dockerignore`](./.dockerignore).
 
 ### Web (Vercel)
 
-```bash
-pnpm --filter @ecommerce/web build
-```
+Import repo → **Root Directory:** `apps/web` (not `apps/api`).
 
-Set `NEXT_PUBLIC_API_URL` to the Render API URL (e.g. `https://giga-shop-api.onrender.com`).
+| Setting | Value |
+|---------|--------|
+| `NEXT_PUBLIC_API_URL` | `https://giga-shop-api.onrender.com` (no trailing slash) |
+
+[`apps/web/vercel.json`](./apps/web/vercel.json) runs install/build from the monorepo root so `@ecommerce/shared-types` can run `prisma generate` before `tsc`. Defaults: `cd ../.. && pnpm install` and `turbo run build --filter=@ecommerce/web`.
+
+After deploy, optionally tighten Render `CORS_ORIGIN` to your exact Vercel URL.
 
 ---
 

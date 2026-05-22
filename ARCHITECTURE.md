@@ -8,7 +8,7 @@
 - Cache: Redis (Upstash)
 - Search: PostgreSQL Full-Text Search (tsvector + pg_trgm)
 - Validation: Zod
-- Deployment: Vercel (frontend) + Render Docker (API); local Postgres/Redis via Docker Compose
+- Deployment: Vercel (web) + Render Docker (API) + Supabase (Postgres) + Upstash (cache); local Postgres via Docker Compose
 
 ## Code Style
 - Use TypeScript strict mode
