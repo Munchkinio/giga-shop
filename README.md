@@ -12,6 +12,7 @@ For day-to-day coding conventions and performance rules, see **[ARCHITECTURE.md]
 | **Storefront** | [https://giga-shop-web.vercel.app](https://giga-shop-web.vercel.app)                   |
 | **API**        | [https://giga-shop-api.onrender.com](https://giga-shop-api.onrender.com)               |
 | **API health** | [https://giga-shop-api.onrender.com/health](https://giga-shop-api.onrender.com/health) |
+| **API docs**   | [https://giga-shop-api.onrender.com/docs](https://giga-shop-api.onrender.com/docs) (Swagger UI) |
 
 
 Stack: **Vercel** (web) · **Render** (API, Docker) · **Supabase** (Postgres) · **Upstash** (Redis cache).
@@ -35,6 +36,7 @@ Stack: **Vercel** (web) · **Render** (API, Docker) · **Supabase** (Postgres) �
 - [API rate limiting](#api-rate-limiting)
 - [Building for production](#building-for-production)
 - [API reference](#api-reference)
+- [Interactive API docs (OpenAPI / Swagger)](#interactive-docs-openapi--swagger)
 - [Storefront (web)](#storefront-web)
 - [Search & filters](#search--filters)
 - [Caching](#caching)
@@ -59,6 +61,7 @@ Stack: **Vercel** (web) · **Render** (API, Docker) · **Supabase** (Postgres) �
 | **Quick view**     | Side panel with product details without leaving the catalog                                                |
 | **Saved searches** | Save / apply / delete filter combinations per browser session                                              |
 | **Rate limiting**  | Per-IP API throttle; `GET /health` excluded — [API rate limiting](#api-rate-limiting)                      |
+| **API docs**       | OpenAPI 3 + Swagger UI at `/docs` — [Interactive API docs](#interactive-docs-openapi--swagger)           |
 | **SEO**            | `generateMetadata` on catalog and product pages                                                            |
 
 
@@ -225,7 +228,8 @@ ecommerce-catalog/
 │   │       ├── routes/         # HTTP routes
 │   │       ├── services/       # Business logic + Redis cache
 │   │       ├── lib/            # parse-search-query, cache, session-id
-│   │       └── plugins/        # error-handler, redis
+│   │       ├── openapi/        # JSON Schema + route docs for Swagger
+│   │       └── plugins/        # error-handler, redis, rate-limit, swagger
 │   └── web/                    # Next.js storefront (:3000)
 │       ├── vercel.json         # Monorepo install/build on Vercel
 │       └── src/
@@ -434,6 +438,7 @@ Use when hosting the database on [Supabase](https://supabase.com) (not local Doc
 | API    | `pnpm --filter @ecommerce/api dev` | [http://localhost:3001](http://localhost:3001)               |
 | Web    | `pnpm --filter @ecommerce/web dev` | [http://localhost:3000](http://localhost:3000)               |
 | Health | —                                  | [http://localhost:3001/health](http://localhost:3001/health) |
+| API docs (Swagger) | —                          | [http://localhost:3001/docs](http://localhost:3001/docs) |
 
 ## API rate limiting
 
@@ -533,16 +538,29 @@ Base URL: `http://localhost:3001` (local).
 
 ### Interactive docs (OpenAPI / Swagger)
 
-When `OPENAPI_ENABLED=true` (default), the API serves:
+> **Where to find this:** Table of contents → **Interactive API docs**, or Ctrl+F → `Interactive docs`.
+
+When `OPENAPI_ENABLED=true` (default), the API serves interactive documentation:
 
 | URL | Description |
 | --- | ----------- |
-| [http://localhost:3001/docs](http://localhost:3001/docs) | Swagger UI — try endpoints in the browser |
-| [http://localhost:3001/docs/json](http://localhost:3001/docs/json) | OpenAPI 3.0 JSON spec |
+| `/docs` | **Swagger UI** — try endpoints, see query params and response models |
+| `/docs/json` | **OpenAPI 3.0** JSON (import into Postman, Insomnia, etc.) |
 
-Set `API_PUBLIC_URL` (e.g. `https://giga-shop-api.onrender.com`) so the **Servers** dropdown in Swagger matches production. `/docs` is registered before rate limiting (same as `/health`).
+**Local:** [http://localhost:3001/docs](http://localhost:3001/docs) · **Production:** [https://giga-shop-api.onrender.com/docs](https://giga-shop-api.onrender.com/docs)
 
-Disable docs: `OPENAPI_ENABLED=false`.
+**Documented endpoints:** health, products, search, suggest, categories, brands, saved searches (header `X-Session-Id` UUID for the latter).
+
+**Env:**
+
+| Variable | Default | Role |
+| -------- | ------- | ---- |
+| `OPENAPI_ENABLED` | `true` | Set `false` to disable `/docs` |
+| `API_PUBLIC_URL` | `http://localhost:PORT` | **Servers** URL in the spec (set to your Render API URL in production) |
+
+`/docs` is registered **before** rate limiting (same as `/health`), so browsing the spec is not throttled.
+
+**Source:** [`apps/api/src/plugins/swagger.ts`](./apps/api/src/plugins/swagger.ts), route schemas in [`apps/api/src/openapi/`](./apps/api/src/openapi/) (Zod models in `entity-schemas.ts`, shared request types from `@ecommerce/shared-types`).
 
 ### Health
 
