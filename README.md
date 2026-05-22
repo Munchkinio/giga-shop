@@ -151,7 +151,7 @@ Kafka is a common way to implement that decoupling at high volume. It is **not**
 - Kafka / streaming pipelines, consumer groups, replay-at-scale
 - Continuous ingestion (1M+ offer updates per day)
 - Live UI updates without refresh (WebSockets / SSE)
-- Automatic cache invalidation on offer write (planned; today TTL-based cache only)
+- Bulk offer ingestion / admin UI (single-offer `PATCH` exists for demos)
 - Denormalized `min_list_price` on `products` maintained by a background worker
 
 Demo data is loaded once via `**pnpm --filter @ecommerce/db db:seed`**. Manual edits (e.g. Prisma Studio) are enough to show that offer changes update the storefront without breaking search.
@@ -587,6 +587,22 @@ Both paths are not rate-limited ([details](#api-rate-limiting)). Render can keep
 | `GET`  | `/search`                   | Full-text search when `q` is present                |
 | `GET`  | `/search/suggest?q=&limit=` | Autocomplete (min 2 chars)                          |
 
+### Offers (mutations)
+
+
+| Method  | Path            | Description |
+| ------- | --------------- | ----------- |
+| `PATCH` | `/offers/:id`   | Update price, stock, availability — **invalidates Redis** (see **Cache invalidation**) |
+
+Partial JSON body (at least one field): `price`, `compareAtPrice`, `stockQuantity`, `isAvailable`, `shippingDays`, `sellerName`, `currency`. Example:
+
+```powershell
+Invoke-RestMethod -Method Patch -Uri "http://localhost:3001/offers/<offer-uuid>" `
+  -ContentType "application/json" -Body '{"stockQuantity":10}'
+```
+
+Offer UUIDs are on the product detail response (`offers[].id`). PDP stock text updates after the next fetch (Next.js may cache SSR ~60s).
+
 
 **Shared query parameters** (flat query string → `SearchRequest` via Zod):
 
@@ -696,17 +712,38 @@ JSON shape from error plugin: `{ error: { code, message } }` (e.g. `400`, `404`,
 ## Caching
 
 
-| Key prefix         | TTL   | Content             |
-| ------------------ | ----- | ------------------- |
-| `products:`*       | 5 min | List/search results |
-| `search:*`         | 5 min | FTS search results  |
-| `search:suggest:*` | 2 min | Autocomplete        |
-| `product:slug:*`   | 5 min | Product detail      |
+| Key pattern | TTL | Content |
+| ----------- | --- | ------- |
+| `products:v{N}:<hash>` | 5 min | List/filter results (catalog version `N`) |
+| `search:v{N}:<hash>` | 5 min | FTS search results |
+| `search:suggest:v{N}:<hash>` | 2 min | Autocomplete |
+| `product:slug:<slug>` | 5 min | Product detail (no version — deleted directly) |
 
+`N` comes from Redis key `cache:catalog:version` (starts at `1`).
 
 If Upstash env vars are missing, API runs **without cache** (every request hits Postgres; still functional).
 
 **Setup:** Upstash → **Create Database** → region near API → enable **eviction** (safe for TTL cache) → copy **REST URL** + **token** to Render (and root `.env` for local API).
+
+### Cache invalidation
+
+After **offer/price/stock** or **product** changes, the API should drop stale Redis entries:
+
+1. **Listings + search + suggest** — `INCR cache:catalog:version` (one command). New requests use `v{N+1}` keys; old `v{N}` keys expire by TTL (~5 min max staleness if you skip invalidation).
+2. **Product detail** — `DEL product:slug:<slug>` for the affected slug.
+
+Code: [`invalidateProductCatalog()`](./apps/api/src/lib/cache-invalidation.ts) — called automatically by `PATCH /offers/:id` (and any future product/offer mutations should call it too).
+
+```typescript
+await invalidateProductCatalog(redis, {
+  productSlug: "ergonomic-metal-pants",
+  listings: true, // default — bumps catalog version
+});
+```
+
+**Manual invalidation** (e.g. after Prisma Studio edit): Upstash CLI/console → `INCR cache:catalog:version` and `DEL product:slug:your-slug`, or redeploy/wait for TTL.
+
+**Why not scan all keys?** List/search keys are hashed query params; scanning `products:*` on every change would burn Upstash free-tier commands. Version bump invalidates all listing caches in **one** `INCR`.
 
 ---
 

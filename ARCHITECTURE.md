@@ -28,7 +28,7 @@
 - Always use absolute imports (@/...)
 
 ## Performance Rules
-- Cache search results in Redis (5 min TTL)
+- Cache search results in Redis (5 min TTL); invalidate via `cache:catalog:version` INCR + `DEL product:slug:*` (see README **Cache invalidation**)
 - Use cursor-based pagination for infinite scroll
 - Use offset pagination for page-based UI
 - Always add proper indexes for new query patterns

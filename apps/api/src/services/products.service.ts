@@ -13,7 +13,12 @@ import type {
   SearchResult,
 } from "@ecommerce/shared-types";
 import type { Redis } from "@upstash/redis";
-import { buildCacheKey, getCached, setCached } from "@/lib/cache.js";
+import {
+  buildCatalogCacheKey,
+  buildProductSlugCacheKey,
+  getCached,
+  setCached,
+} from "@/lib/cache.js";
 import { NotFoundError } from "@/errors/http-errors.js";
 
 function mapOffer(
@@ -82,7 +87,7 @@ export async function listProducts(
   redis: Redis | null,
   request: SearchRequest,
 ): Promise<SearchResult> {
-  const cacheKey = buildCacheKey("products", request);
+  const cacheKey = await buildCatalogCacheKey(redis, "products", request);
   const cached = await getCached<SearchResult>(redis, cacheKey);
   if (cached) {
     return cached;
@@ -100,7 +105,7 @@ export async function getProductDetail(
   redis: Redis | null,
   slug: string,
 ): Promise<ProductDetail> {
-  const cacheKey = `product:slug:${slug}`;
+  const cacheKey = buildProductSlugCacheKey(slug);
   const cached = await getCached<ProductDetail>(redis, cacheKey);
   if (cached) {
     return cached;
