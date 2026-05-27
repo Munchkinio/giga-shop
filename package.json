@@ -6,6 +6,8 @@
     "dev": "turbo run dev",
     "build": "turbo run build",
     "lint": "turbo run lint",
+    "test": "turbo run test",
+    "test:coverage": "turbo run test:coverage",
     "format": "turbo run format",
     "clean": "turbo run clean",
     "db:up": "docker compose up -d postgres redis",
