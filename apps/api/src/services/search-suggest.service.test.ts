@@ -1,5 +1,5 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
-import type { SearchSuggestResponse } from "@ecommerce/shared-types";
+import { searchSuggestion, searchSuggestResponse } from "../test-fixtures.js";
 import { suggest } from "./search-suggest.service.js";
 
 const {
@@ -31,10 +31,7 @@ describe("search-suggest service", () => {
   });
 
   it("returns cached suggestions without querying DB", async () => {
-    const cached = {
-      query: "iph",
-      suggestions: ["iphone"],
-    } as SearchSuggestResponse;
+    const cached = searchSuggestResponse("iph", ["iphone"]);
     mockGetCached.mockResolvedValue(cached);
 
     const result = await suggest(null, "iph", 5);
@@ -46,7 +43,11 @@ describe("search-suggest service", () => {
 
   it("loads suggestions from DB and caches with short TTL", async () => {
     mockGetCached.mockResolvedValue(null);
-    mockGetSearchSuggestions.mockResolvedValue(["iphone", "ipad"]);
+    const suggestions = [
+      searchSuggestion("iphone"),
+      searchSuggestion("ipad"),
+    ];
+    mockGetSearchSuggestions.mockResolvedValue(suggestions);
 
     const result = await suggest(null, "ip", 10);
 
@@ -59,12 +60,9 @@ describe("search-suggest service", () => {
     expect(mockSetCached).toHaveBeenCalledWith(
       null,
       "search:suggest:v1:key",
-      { query: "ip", suggestions: ["iphone", "ipad"] },
+      { query: "ip", suggestions },
       120,
     );
-    expect(result).toEqual({
-      query: "ip",
-      suggestions: ["iphone", "ipad"],
-    });
+    expect(result).toEqual({ query: "ip", suggestions });
   });
 });

@@ -1,5 +1,5 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
-import type { SearchRequest, SearchResult } from "@ecommerce/shared-types";
+import { searchRequest, searchResult } from "../test-fixtures.js";
 import { search } from "./search.service.js";
 
 const {
@@ -31,8 +31,8 @@ describe("search service", () => {
   });
 
   it("returns cached value without querying DB", async () => {
-    const request = { q: "iphone" } as SearchRequest;
-    const cached = { items: [], total: 0 } as SearchResult;
+    const request = searchRequest({ query: "iphone" });
+    const cached = searchResult();
     mockGetCached.mockResolvedValue(cached);
 
     const result = await search(null, request);
@@ -43,8 +43,11 @@ describe("search service", () => {
   });
 
   it("queries DB and writes cache on miss", async () => {
-    const request = { q: "macbook", page: 1, pageSize: 20 } as SearchRequest;
-    const dbResult = { items: [{ id: "p1" }], total: 1 } as SearchResult;
+    const request = searchRequest({
+      query: "macbook",
+      pagination: { type: "offset", page: 1, pageSize: 20 },
+    });
+    const dbResult = searchResult({ total: 1 });
     mockGetCached.mockResolvedValue(null);
     mockSearchProducts.mockResolvedValue(dbResult);
 

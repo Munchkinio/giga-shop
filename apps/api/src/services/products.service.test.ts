@@ -1,6 +1,7 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
-import type { SearchRequest, SearchResult } from "@ecommerce/shared-types";
+import type { ProductDetail } from "@ecommerce/shared-types";
 import { NotFoundError } from "@/errors/http-errors.js";
+import { searchRequest, searchResult } from "../test-fixtures.js";
 import { getProductDetail, listProducts } from "./products.service.js";
 
 const {
@@ -42,8 +43,12 @@ describe("products service", () => {
   });
 
   it("returns list from cache when available", async () => {
-    const request = { page: 1, pageSize: 10 } as SearchRequest;
-    const cached = { items: [], total: 0 } as SearchResult;
+    const request = searchRequest({
+      pagination: { type: "offset", page: 1, pageSize: 10 },
+    });
+    const cached = searchResult({
+      pagination: { type: "offset", page: 1, pageSize: 10, hasMore: false },
+    });
     mockGetCached.mockResolvedValue(cached);
 
     const result = await listProducts(null, request);
@@ -54,8 +59,10 @@ describe("products service", () => {
   });
 
   it("loads list from DB and caches it on miss", async () => {
-    const request = { page: 1, pageSize: 10 } as SearchRequest;
-    const dbResult = { items: [{ id: "p1" }], total: 1 } as SearchResult;
+    const request = searchRequest({
+      pagination: { type: "offset", page: 1, pageSize: 10 },
+    });
+    const dbResult = searchResult({ total: 1 });
     mockGetCached.mockResolvedValue(null);
     mockGetProducts.mockResolvedValue(dbResult);
 
@@ -67,7 +74,7 @@ describe("products service", () => {
   });
 
   it("returns product detail from cache when available", async () => {
-    const cached = { id: "p1", slug: "iphone-15", name: "iPhone 15" };
+    const cached = { id: "p1", slug: "iphone-15", name: "iPhone 15" } as ProductDetail;
     mockGetCached.mockResolvedValue(cached);
 
     const result = await getProductDetail(null, "iphone-15");
